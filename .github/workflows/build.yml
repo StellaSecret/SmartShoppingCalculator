@@ -1,0 +1,250 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  # ─── Job 1 : Kotlin unit tests ───────────────────────────────────────────────
+  test-kotlin:
+    name: 🧪 Kotlin Unit Tests (JUnit5 + Mockk)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Run Kotlin unit tests
+        run: ./gradlew :tests:unit:test --no-daemon
+
+      - name: Upload Kotlin test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kotlin-test-report-${{ github.run_number }}
+          path: tests/unit/build/reports/tests/test/
+          retention-days: 14
+
+  # ─── Job 2 : Playwright e2e tests ────────────────────────────────────────────
+  test-playwright:
+    name: 🎭 Playwright E2E Tests (Web + Mobile)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: tests/e2e
+        run: npm install
+
+      - name: Install Playwright browsers
+        working-directory: tests/e2e
+        # chromium covers both [chromium] and [mobile-chrome] projects.
+        # firefox is a separate engine and must be installed explicitly.
+        run: npx playwright install --with-deps chromium firefox
+
+      - name: Run Playwright tests
+        working-directory: tests/e2e
+        run: npx playwright test
+        env:
+          CI: true
+
+      - name: Upload Playwright HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_number }}
+          path: tests/e2e/playwright-report/
+          retention-days: 14
+
+      - name: Upload Playwright traces (failures only)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces-${{ github.run_number }}
+          path: tests/e2e/test-results/
+          retention-days: 7
+
+  # ─── Job 3 : Build ───────────────────────────────────────────────────────────
+  build:
+    name: 🤖 Build Android (Kotlin + Gradle)
+    runs-on: ubuntu-latest
+    needs: [test-kotlin, test-playwright]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Decode keystore
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/keystore.jks
+
+      - name: Set versionCode
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          sed -i "s/versionCode [0-9]*/versionCode ${{ github.run_number }}/" app/build.gradle
+          sed -i "s/versionName \".*\"/versionName \"1.0.${{ github.run_number }}\"/" app/build.gradle
+
+      - name: Lint
+        run: ./gradlew lintDebug --no-daemon || true
+
+      - name: Build debug APK (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload debug APK
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartShopping-debug-${{ github.run_number }}
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
+
+      - name: Build release APK + AAB
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          ./gradlew assembleRelease bundleRelease --no-daemon \
+            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/app/keystore.jks \
+            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+
+      - name: Collect artifacts
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          mkdir -p dist
+          find app/build/outputs/apk/release/ -name "*.apk" | while read f; do
+            base=$(basename "$f" .apk)
+            cp "$f" "dist/smart-shopping-${base}-${{ github.run_number }}.apk"
+          done
+          cp app/build/outputs/bundle/release/app-release.aab \
+             dist/smart-shopping-${{ github.run_number }}.aab
+          ls -lh dist/
+
+      - name: Upload release artifacts
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartShopping-release-${{ github.run_number }}
+          path: dist/
+          retention-days: 90
+
+  # ─── Job 4 : Deploy GitHub Pages ─────────────────────────────────────────────
+  deploy-pages:
+    name: 🌐 Deploy GitHub Pages
+    runs-on: ubuntu-latest
+    needs: [test-kotlin, test-playwright]
+    if: ${{ github.event_name != 'pull_request' }}
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Assemble web/ folder
+        run: |
+          mkdir -p web
+          # Landing site files (index, demo, app pages)
+          # Privacy pages are hosted at stellasecret.github.io/privacy-pages/
+          cp web-src/index.html          web/index.html
+          cp web-src/demo.html           web/demo.html
+          cp web-src/app.html            web/app.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Deploy web/ subfolder: landing, demo, app pages.
+          # calculator.html lives in app/src/main/assets/ for the Android WebView only.
+          path: web
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
+
+  # ─── Job 5 : GitHub Release ──────────────────────────────────────────────────
+  release:
+    name: 🚀 GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: ${{ github.event_name != 'pull_request' }}
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: SmartShopping-release-${{ github.run_number }}
+          path: dist/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: "Smart Shopping Calculator build #${{ github.run_number }}"
+          body: |
+            Build #${{ github.run_number }} — commit `${{ github.sha }}`
+
+            | Fichier | Usage |
+            |---------|-------|
+            | `*-arm64*.apk` | Appareils récents arm64 (recommandé) |
+            | `*-universal*.apk` | Tous appareils |
+            | `*.aab` | Google Play Console |
+          files: dist/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

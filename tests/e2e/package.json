@@ -1,0 +1,17 @@
+{
+  "name": "smart-shopping-calculator-e2e",
+  "version": "1.0.0",
+  "description": "Playwright non-regression tests for Smart Shopping Calculator",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report",
+    "prepare": "cd ../.. && husky tests/e2e/.husky && chmod +x tests/e2e/.husky/pre-commit && sed -i 's|sh -e \"$s\" \"$@\"|\"$s\"|' tests/e2e/.husky/_/h"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "@types/node": "^20.0.0",
+    "husky": "^9.0.0"
+  }
+}

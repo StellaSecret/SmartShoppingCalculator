@@ -1,0 +1,40 @@
+// ── Plugin ────────────────────────────────────────────────────────────────────
+// Do NOT declare a version here — kotlin.jvm is already on the classpath
+// via the root build.gradle's pluginManagement. Redeclaring with a version
+// causes: "plugin already on the classpath with an unknown version".
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+}
+
+kotlin {
+    jvmToolchain(17)
+}
+
+dependencies {
+    // JUnit 5
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.2'
+    testRuntimeOnly  'org.junit.jupiter:junit-jupiter-engine:5.10.2'
+
+    // Mockk — JVM-only, no Android runtime needed
+    testImplementation 'io.mockk:mockk:1.13.10'
+
+    // Objenesis — allocate objects without invoking their constructor (used to
+    // bypass android stub constructors that throw RuntimeException("Stub!"))
+    testImplementation 'org.objenesis:objenesis:3.3'
+
+    // Kotest assertions
+    testImplementation 'io.kotest:kotest-assertions-core:5.9.1'
+
+    // Android stubs so we can import android.* classes in unit tests without an emulator
+    compileOnly 'com.google.android:android:4.1.1.4'
+    testImplementation 'com.google.android:android:4.1.1.4'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
+}
