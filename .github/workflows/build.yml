@@ -120,16 +120,8 @@ jobs:
 
       - name: Decode keystore
         if: ${{ github.event_name != 'pull_request' }}
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 --decode > app/keystore.jks
-          cat > key.properties << PROPS
-          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
-          keyPassword=${{ secrets.KEY_PASSWORD }}
-          keyAlias=${{ secrets.KEY_ALIAS }}
-          storeFile=keystore.jks
-          PROPS
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/keystore.jks
 
       - name: Set versionCode
         if: ${{ github.event_name != 'pull_request' }}
@@ -151,13 +143,14 @@ jobs:
           path: app/build/outputs/apk/debug/app-debug.apk
           retention-days: 7
 
-      - name: Build release APK
+      - name: Build release APK + AAB
         if: ${{ github.event_name != 'pull_request' }}
-        run: ./gradlew assembleRelease --no-daemon
-
-      - name: Build release AAB
-        if: ${{ github.event_name != 'pull_request' }}
-        run: ./gradlew bundleRelease --no-daemon
+        run: |
+          ./gradlew assembleRelease bundleRelease --no-daemon \
+            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/app/keystore.jks \
+            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
 
       - name: Collect artifacts
         if: ${{ github.event_name != 'pull_request' }}
