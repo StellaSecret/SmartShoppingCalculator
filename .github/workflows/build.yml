@@ -66,6 +66,8 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: tests/e2e
+        # chromium covers both [chromium] and [mobile-chrome] projects.
+        # firefox is a separate engine and must be installed explicitly.
         run: npx playwright install --with-deps chromium firefox
 
       - name: Run Playwright tests
@@ -127,6 +129,7 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         run: |
           sed -i "s/versionCode [0-9]*/versionCode ${{ github.run_number }}/" app/build.gradle
+          sed -i "s/versionName \".*\"/versionName \"1.0.${{ github.run_number }}\"/" app/build.gradle
 
       - name: Lint
         run: ./gradlew lintDebug --no-daemon || true
@@ -170,7 +173,7 @@ jobs:
         with:
           name: SmartShopping-release-${{ github.run_number }}
           path: dist/
-          retention-days: 3
+          retention-days: 90
 
   # ─── Job 4 : Deploy GitHub Pages ─────────────────────────────────────────────
   deploy-pages:
@@ -195,7 +198,9 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: app/src/main/assets
+          # Deploy root dir: contains index.html, *.js modules, and privacy.html
+          # The assets/ copy is for the Android WebView — same files, different location.
+          path: .
 
       - name: Deploy to GitHub Pages
         id: deploy

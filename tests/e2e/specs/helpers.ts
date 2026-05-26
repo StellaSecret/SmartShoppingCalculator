@@ -87,20 +87,21 @@ export class CalcPage {
   async fillPowder(cardIndex: number, fields: Partial<{
     price: string; weight: string; servings: string; protein: string;
   }>) {
-    const card = this.page.locator('.item-card').nth(cardIndex);
+    const card = this.page.locator('#pro-grid .item-card').nth(cardIndex);
 
-    const set = async (placeholder: string, value: string) => {
-      const input = card.locator(`input[placeholder*="${placeholder}"]`).first();
+    const setByLabel = async (labelText: string, value: string) => {
+      const field = card.locator('.field').filter({ hasText: labelText });
+      const input = field.locator('input[type="number"]').first();
       if (await input.count() > 0) {
         await input.fill(value);
         await input.dispatchEvent('input');
       }
     };
 
-    if (fields.price    != null) await set('29.99', fields.price);
-    if (fields.weight   != null) await set('1000',  fields.weight);
-    if (fields.servings != null) await set('33',    fields.servings);
-    if (fields.protein  != null) await set('25',    fields.protein);
+    if (fields.price    != null) await setByLabel('Price',    fields.price);
+    if (fields.weight   != null) await setByLabel('weight',   fields.weight);
+    if (fields.servings != null) await setByLabel('Servings', fields.servings);
+    if (fields.protein  != null) await setByLabel('Protein',  fields.protein);
   }
 
   async getProteinResult(cardIndex: number): Promise<string> {
@@ -112,5 +113,5 @@ export class CalcPage {
 
   // ── Shared helpers ───────────────────────────────────────────────────────
   winnerCard() { return this.page.locator('.item-card.winner'); }
-  rankItems()  { return this.page.locator('.rank-item'); }
+  rankItems()  { return this.page.locator('.page.visible .rank-item'); }
 }

@@ -4,16 +4,20 @@ import android.content.Context
 import android.widget.Toast
 
 /**
- * JavaScript ↔ Kotlin bridge exposed as `window.AndroidBridge`.
+ * TEST-MODULE COPY — do not add logic here.
  *
- * This file is a source-only copy of the app module's AndroidBridge, placed in
- * the tests/unit test source set so that AndroidBridgeTest can compile without
- * depending on the Android app module or BuildConfig.
+ * Mirrors app/src/main/java/.../AndroidBridge.kt so AndroidBridgeTest can
+ * compile in the JVM-only tests/unit module without depending on the app
+ * module or BuildConfig.
  *
- * Differences from the production version:
- *  - @JavascriptInterface annotations are omitted (android.webkit is not on the
- *    JVM test classpath; the annotation is only needed by the Android WebView runtime)
- *  - VERSION_NAME is a constant instead of BuildConfig.VERSION_NAME
+ * ⚠️  KEEP IN SYNC: when you add/change a method in the production
+ * AndroidBridge, make the same change here. The pre-commit hook warns if
+ * the public method signatures diverge.
+ *
+ * Intentional differences from production:
+ *  - @JavascriptInterface omitted (android.webkit absent from JVM classpath;
+ *    annotation is runtime-only and has no effect on logic).
+ *  - BuildConfig.VERSION_NAME → companion object constant VERSION_NAME.
  */
 class AndroidBridge(private val context: Context) {
 
@@ -30,8 +34,7 @@ class AndroidBridge(private val context: Context) {
     fun getAppVersion(): String = VERSION_NAME
 
     companion object {
-        // Mirrors BuildConfig.VERSION_NAME from the app module.
-        // Keep in sync with app/build.gradle versionName.
+        // Keep in sync with versionName in app/build.gradle.
         const val VERSION_NAME = "1.0.0"
     }
 }

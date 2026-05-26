@@ -1,126 +1,166 @@
-# 🛒 Smart Shopping Calculator — Android
+# 🛒 Smart Shopping Calculator
 
-Application Android native (Kotlin + WebView) qui emballe le calculateur web dans une vraie app Android.
+Compare everyday products by their **real unit cost** — toilet paper by €/g of paper, protein powder by €/g of protein. No ads, no account, runs entirely offline.
 
-## Structure du projet
+→ **[Try it on the web](https://falltrades.github.io/SmartShoppingCalculator/)** · [Privacy Policy](https://falltrades.github.io/SmartShoppingCalculator/privacy.html)
+
+---
+
+## Project structure
 
 ```
-smart-shopping-calculator-android/
+├── index.html          ← Shell HTML + CSS (web & Android)
+├── darkmode.js         ← Dark mode toggle + localStorage
+├── nav.js              ← Tab navigation, page switching
+├── tp.js               ← Toilet paper logic (4 methods: weight/sheets/diameter/hand)
+├── protein.js          ← Protein powder logic (cost per gram, ranking)
+├── init.js             ← Bootstrap: add default rolls/powders
+│
 ├── app/
 │   └── src/main/
-│       ├── assets/index.html          ← L'app web complète (locale)
-│       ├── java/com/smartshopping/
-│       │   ├── MainActivity.kt        ← WebView host
-│       │   └── AndroidBridge.kt      ← Pont JS ↔ Kotlin
-│       └── res/…                      ← Icônes, layouts, thèmes
-├── .github/workflows/build.yml        ← CI/CD GitHub Actions
-└── key.properties                     ← (non versionné) pour la signature
+│       ├── assets/     ← Exact copy of root web files (served by Android WebView)
+│       ├── java/com/stellasecret/smartshoppingcalculator/
+│       │   ├── MainActivity.kt    ← WebView host, lifecycle, dark mode injection
+│       │   └── AndroidBridge.kt  ← JS ↔ Kotlin bridge (Toast, dark mode, version)
+│       └── res/                   ← Icons, layouts, themes
+│
+├── tests/
+│   ├── e2e/            ← Playwright end-to-end tests (65 tests, 3 browsers)
+│   ├── unit/           ← JUnit5 + Mockk Kotlin unit tests (71 tests)
+│   └── .husky/pre-commit ← Pre-commit checks (secrets, keys, sync, YAML)
+│
+└── .github/workflows/build.yml  ← CI/CD pipeline
 ```
 
-## Build local (Android Studio)
+> **Rule:** `index.html` and the 5 JS files must always be **identical** between the repo root and `app/src/main/assets/`. The pre-commit hook enforces this.
 
-1. Ouvrir le dossier dans **Android Studio Hedgehog** (2023.1+)
-2. Laisser Gradle sync se terminer
-3. `Build → Make Project` ou `Run`
+---
 
-## Build en ligne de commande
+## Running locally
 
+### Web (no setup needed)
+Open `index.html` directly in a browser — everything is local, no server required.
+
+### Android
+1. Open the repo root in **Android Studio Hedgehog (2023.1+)**
+2. Let Gradle sync finish
+3. `Run` (debug build, no signing needed)
+
+### Command line
 ```bash
-# Debug
+# Debug APK
 ./gradlew assembleDebug
 
-# Release (nécessite key.properties, voir ci-dessous)
-./gradlew assembleRelease
-./gradlew bundleRelease
+# Release APK + AAB (signing injected by CI — see below)
+./gradlew assembleRelease bundleRelease
 ```
 
-## Signature (release)
+---
 
-Créer un keystore :
-```bash
-keytool -genkey -v -keystore my-release.jks \
-  -alias my-key -keyalg RSA -keysize 2048 -validity 10000
-```
+## Tests
 
-Créer `key.properties` à la racine (déjà dans `.gitignore`) :
-```properties
-storePassword=votre_mot_de_passe
-keyPassword=votre_mot_de_passe_clé
-keyAlias=my-key
-storeFile=my-release.jks
-```
+### Playwright — E2E (`tests/e2e/`)
 
-## GitHub Actions — Secrets requis
-
-| Secret | Description |
-|--------|-------------|
-| `KEYSTORE_BASE64` | `base64 -w0 my-release.jks` |
-| `KEYSTORE_PASSWORD` | Mot de passe du keystore |
-| `KEY_PASSWORD` | Mot de passe de la clé |
-| `KEY_ALIAS` | Alias de la clé (ex: `my-key`) |
-
-> Pour les PRs, un APK debug est produit sans signature.  
-> Pour les pushs sur `main`, un APK signé + AAB sont publiés en GitHub Release.
-
-## Tests de non-régression
-
-### Playwright — E2E Web (`tests/e2e/`)
-
-Couvre toute la logique métier dans `index.html` : les 4 méthodes papier toilette, les poudres protéinées, le ranking, les cas limites, et un viewport mobile (Pixel 7).
+Covers all business logic in the JS modules: 4 toilet paper methods, protein powder, ranking, edge cases, mobile viewport (Pixel 7).
 
 ```bash
 cd tests/e2e
 npm ci
 npx playwright install --with-deps chromium firefox
-npx playwright test               # headless CI
-npx playwright test --headed      # avec fenêtre visible
-npx playwright test --ui          # mode interactif
-npx playwright show-report        # rapport HTML après exécution
+npx playwright test           # headless
+npx playwright test --headed  # visible browser
+npx playwright test --ui      # interactive mode
+npx playwright show-report    # HTML report
 ```
 
-| Suite | Fichier | Nb tests |
-|-------|---------|----------|
-| Navigation & Dark Mode | `navigation.spec.ts` | 7 |
-| Toilet Paper (4 méthodes) | `toilet-paper.spec.ts` | 22 |
+| Suite | File | Tests |
+|-------|------|-------|
+| Navigation & Dark Mode | `navigation.spec.ts` | 8 |
+| Toilet Paper (4 methods) | `toilet-paper.spec.ts` | 22 |
 | Protein Powder | `protein.spec.ts` | 18 |
 | Edge Cases & Mobile | `edge-cases.spec.ts` | 11 |
 
-### JUnit5 + Mockk — Tests unitaires Kotlin (`tests/unit/`)
+### Kotlin unit tests (`tests/unit/`)
 
-Couvre `AndroidBridge`, toutes les formules de calcul, le ranking, et la logique `MainActivity` (cycle de vie, dark mode, navigation).
+Covers `AndroidBridge`, all calculation formulae, ranking, and `MainActivity` lifecycle.
 
 ```bash
-cd tests/unit
-./../../gradlew test
-# rapport : tests/unit/build/reports/tests/test/index.html
+./gradlew :tests:unit:test --no-daemon
+# Report: tests/unit/build/reports/tests/test/index.html
 ```
 
-| Fichier | Ce qui est testé |
-|---------|-----------------|
-| `AndroidBridgeTest.kt` | Toast, dark mode système, version app |
-| `CalcLogicTest.kt` | Toutes les formules (poids, feuilles, diamètre, protéines, ranking) |
-| `MainActivityTest.kt` | Cycle de vie WebView, injection JS, swipe refresh, retour |
+| File | What it tests |
+|------|---------------|
+| `AndroidBridgeTest.kt` | Toast, system dark mode, app version |
+| `CalcLogicTest.kt` | Weight/sheets/diameter/protein formulae, ranking, savings |
+| `MainActivityTest.kt` | WebView lifecycle, JS injection, swipe refresh, back nav |
 
-### Pipeline CI
+---
+
+## CI/CD pipeline
 
 ```
-push → test-kotlin ─┐
-                     ├─ build → release
-push → test-playwright ─┘
+push to main
+  ├── test-kotlin    (JUnit5 — 71 tests)
+  ├── test-playwright (Playwright — 65 tests × 3 browsers)
+  │
+  └── [both pass] → build
+                      ├── assembleRelease + bundleRelease (signed via -P flags)
+                      ├── deploy-pages (GitHub Pages)
+                      └── release (GitHub Release with APK + AAB)
 ```
-Le build ne se lance **que si les deux suites de tests passent**.
 
-## Pont JavaScript ↔ Android
+PRs get a debug APK only — no signing, no release.
 
-L'app expose `window.AndroidBridge` dans la WebView :
+### Required GitHub secrets
+
+| Secret | How to get it |
+|--------|---------------|
+| `KEYSTORE_BASE64` | `base64 -w0 your-release.jks` |
+| `KEYSTORE_PASSWORD` | Store password set when creating the keystore |
+| `KEY_ALIAS` | Run `keytool -list -keystore your-release.jks` — first word before the comma |
+| `KEY_PASSWORD` | Key password (often same as store password) |
+
+---
+
+## Adding a new product category
+
+1. Create `yourcategory.js` in the repo root (follow the pattern in `tp.js` or `protein.js`)
+2. Copy it to `app/src/main/assets/yourcategory.js`
+3. Add `<script src="yourcategory.js"></script>` to `index.html` (and copy to assets)
+4. Add a tab button in `index.html` calling `showPage('yourcategory', this)`
+5. Write Playwright specs in `tests/e2e/specs/yourcategory.spec.ts`
+
+---
+
+## JavaScript ↔ Android bridge
+
+The app exposes `window.AndroidBridge` in the WebView:
 
 ```javascript
-// Afficher un Toast natif
-AndroidBridge.showToast("Sauvegardé !");
-
-// Détecter le mode sombre système
-const dark = AndroidBridge.isSystemDarkMode(); // boolean
-
-// Version de l'app
-const v = AndroidBridge.getAppVersion(); // "1.0.0"
+AndroidBridge.showToast("Saved!");          // native Toast
+AndroidBridge.isSystemDarkMode();           // boolean — system dark theme?
+AndroidBridge.getAppVersion();              // "1.0.42"
 ```
+
+---
+
+## Pre-commit hooks
+
+Install once per machine:
+```bash
+cd tests && npm install
+```
+
+Checks on every commit (< 3 seconds):
+
+| Check | Why |
+|-------|-----|
+| No secret patterns | Secrets in git history are permanent |
+| No `.jks`/`.keystore` files | Signing keys must never be committed |
+| `gradle-wrapper.jar` not deleted | Required by CI |
+| No `console.log` in HTML | Debug noise in production |
+| No files > 1MB | Catches accidental APK/zip commits |
+| YAML/JSON syntax | Broken workflow = wasted CI runner |
+| Web files in sync | root == assets, always |
+| AndroidBridge drift | Test copy must match production signatures |

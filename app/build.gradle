@@ -5,14 +5,14 @@ plugins {
 
 android {
     namespace 'com.stellasecret.smartshoppingcalculator'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId "com.stellasecret.smartshoppingcalculator"
         minSdk 24
-        targetSdk 34
-        versionCode 1          // overridden by CI via --versionCode flag
-        versionName "1.0.0"
+        targetSdk 35
+        versionCode 1          // overridden by CI via github.run_number
+        versionName "1.0"      // overridden by CI to "1.0.<run_number>"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

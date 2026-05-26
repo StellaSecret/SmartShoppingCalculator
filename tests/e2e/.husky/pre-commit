@@ -89,15 +89,23 @@ fi
 
 # ── 6. YAML/JSON syntax check for workflow files ───────────────────────────────
 # A broken .yml crashes the whole pipeline before any tests run.
+# Uses .husky/check-yaml.js (js-yaml, devDep in tests/package.json).
+ROOT="$(git rev-parse --show-toplevel)"
+YAML_CHECKER="$ROOT/tests/.husky/check-yaml.js"
 YAML_ERRORS=""
 for f in $STAGED; do
   case "$f" in
     *.yml|*.yaml)
-      if command -v python3 >/dev/null 2>&1; then
+      if command -v node >/dev/null 2>&1 && [ -f "$YAML_CHECKER" ]; then
+        if ! git show ":$f" | node "$YAML_CHECKER" 2>/dev/null; then
+          YAML_ERRORS="$YAML_ERRORS $f"
+        fi
+      elif python3 -c "import yaml" 2>/dev/null; then
         if ! git show ":$f" | python3 -c "import sys,yaml; yaml.safe_load(sys.stdin)" 2>/dev/null; then
           YAML_ERRORS="$YAML_ERRORS $f"
         fi
       fi
+      # If no validator available, skip — CI will catch syntax errors
       ;;
     *.json)
       if command -v python3 >/dev/null 2>&1; then
@@ -112,6 +120,58 @@ if [ -n "$YAML_ERRORS" ]; then
   error "Invalid YAML/JSON syntax:$YAML_ERRORS"
 else
   ok "YAML/JSON syntax valid"
+fi
+
+# ── 7. Web files must be in sync between root and app/src/main/assets ──────────
+# root → GitHub Pages (web users), assets → Android WebView (app users).
+# Both sets must be identical. Files: index.html + 5 JS modules.
+WEB_FILES="index.html darkmode.js nav.js tp.js protein.js init.js"
+SYNC_ERROR=""
+for wf in $WEB_FILES; do
+  ROOT_F="$wf"
+  ASSET_F="app/src/main/assets/$wf"
+  if echo "$STAGED" | grep -qE "(^$ROOT_F$|^$ASSET_F$)"; then
+    if [ -f "$ROOT_F" ] && [ -f "$ASSET_F" ]; then
+      if ! diff -q "$ROOT_F" "$ASSET_F" >/dev/null 2>&1; then
+        SYNC_ERROR="$SYNC_ERROR $wf"
+      fi
+    fi
+  fi
+done
+if [ -n "$SYNC_ERROR" ]; then
+  error "Web files out of sync between root/ and app/src/main/assets/:$SYNC_ERROR"
+  printf "     Fix: for f in index.html darkmode.js nav.js tp.js protein.js init.js; do cp \"\$f\" \"app/src/main/assets/\$f\"; done\n" >&2
+else
+  ok "Web files in sync (root == assets)"
+fi
+
+# ── 8. AndroidBridge public method drift check ─────────────────────────────────
+# The test-module copy must expose the same public methods as production.
+PROD_BRIDGE="app/src/main/java/com/smartshopping/calculator/AndroidBridge.kt"
+TEST_BRIDGE="tests/unit/src/main/kotlin/com/smartshopping/calculator/AndroidBridge.kt"
+if echo "$STAGED" | grep -q "AndroidBridge.kt"; then
+  if [ -f "$PROD_BRIDGE" ] && [ -f "$TEST_BRIDGE" ]; then
+    # Extract public method signatures only — strip body/return values after "=".
+    # Normalise: remove annotations, collapse whitespace, sort.
+    # Example: "  @JavascriptInterface\n  fun showToast(message: String)" → "funshowToast(message:String)"
+    PROD_FUNS=$(grep -E '^\s+fun ' "$PROD_BRIDGE" \
+      | sed 's/@[A-Za-z]*[[:space:]]*//' \
+      | sed 's/=.*//' \
+      | tr -d ' ' | sort)
+    TEST_FUNS=$(grep -E '^\s+fun ' "$TEST_BRIDGE" \
+      | sed 's/@[A-Za-z]*[[:space:]]*//' \
+      | sed 's/=.*//' \
+      | tr -d ' ' | sort)
+    if [ "$PROD_FUNS" != "$TEST_FUNS" ]; then
+      error "AndroidBridge: production and test-copy public methods differ"
+      printf '%s\n' "$PROD_FUNS" > /tmp/_hprod.txt
+      printf '%s\n' "$TEST_FUNS"  > /tmp/_htest.txt
+      diff /tmp/_hprod.txt /tmp/_htest.txt >&2 || true
+      rm -f /tmp/_hprod.txt /tmp/_htest.txt
+    else
+      ok "AndroidBridge production == test copy (no drift)"
+    fi
+  fi
 fi
 
 # ── Result ────────────────────────────────────────────────────────────────────

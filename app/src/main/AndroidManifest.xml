@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- No INTERNET permission — the app loads entirely from local assets.
+         The network security config enforces cleartext blocking as defence-in-depth. -->
 
     <application
         android:allowBackup="true"
