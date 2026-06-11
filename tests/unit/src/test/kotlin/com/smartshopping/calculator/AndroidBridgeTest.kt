@@ -136,6 +136,12 @@ class AndroidBridgeTest {
         v1 shouldBe v2
     }
 
+    @Test
+    @DisplayName("scanBarcode — does not throw")
+    fun `scanBarcode does not throw`() {
+        assertDoesNotThrow { bridge.scanBarcode("pro", 1) }
+    }
+
     // ── Helper ───────────────────────────────────────────────────────────────
 
     private fun stubNightMode(uiModeFlag: Int) {

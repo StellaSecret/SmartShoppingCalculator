@@ -33,6 +33,10 @@ class AndroidBridge(private val context: Context) {
 
     fun getAppVersion(): String = VERSION_NAME
 
+    fun scanBarcode(ns: String, id: Int) {
+        // No-op for test stub
+    }
+
     companion object {
         // Keep in sync with versionName in app/build.gradle.
         const val VERSION_NAME = "1.0.0"

@@ -351,6 +351,31 @@
       font-family: var(--mono);
     }
 
+
+    /* Scan button — only visible when AndroidBridge is present */
+    .scan-btn {
+      display: none;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 6px;
+      width: 100%;
+      justify-content: center;
+    }
+    .scan-btn:hover { color: var(--text); border-color: var(--text); }
+    .scan-btn.scanning { color: var(--win); border-color: var(--win); animation: pulse 1s ease-in-out infinite; }
+    .android-bridge-available .scan-btn { display: flex; }
+
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
     @media (max-width: 520px) {
       .cards-grid { grid-template-columns: 1fr 1fr; }
     }
@@ -885,6 +910,10 @@ function tpRender() {
       <div class="card-result" id="tpres-${r.id}">
         <div class="cpg-label" style="margin-top:4px">fill in all fields</div>
       </div>
+      <button class="scan-btn" id="scan-btn-tp-${r.id}"
+        onclick="triggerScan('tp',${r.id})">📷 scan barcode</button>
+      <div id="scan-err-tp-${r.id}"
+        style="display:none;font-family:var(--mono);font-size:0.68rem;color:#c0392b;margin-top:4px;"></div>
     `;
     grid.appendChild(card);
   });
@@ -1097,6 +1126,10 @@ function proRender() {
       <div class="card-result" id="prores-${p.id}">
         <div class="cpg-label" style="margin-top:4px">fill in all fields</div>
       </div>
+      <button class="scan-btn" id="scan-btn-pro-${p.id}"
+        onclick="triggerScan('pro',${p.id})">📷 scan barcode</button>
+      <div id="scan-err-pro-${p.id}"
+        style="display:none;font-family:var(--mono);font-size:0.68rem;color:#c0392b;margin-top:4px;"></div>
     `;
     grid.appendChild(card);
   });
@@ -1130,6 +1163,80 @@ function proInit() {
 
 tpInit();
 proInit();
+</script>
+
+
+<script>
+/* ══════════════════════════════════════════════
+   BARCODE / PHOTO SCAN  (Android only)
+   AndroidBridge.scanBarcode(ns, id) triggers camera → ML Kit → OFF API.
+   Results are delivered back via evaluateJavascript() calling these globals.
+══════════════════════════════════════════════ */
+
+// Expose on window so evaluateJavascript() can call them by name
+const _SCAN_NS = { tp: 'tp', pro: 'pro' };
+
+/** Called by Kotlin while the lookup is in progress. */
+window.onBarcodeStatus = function(msg) {
+  // Show spinner on whichever card is being scanned
+  const btn = document.getElementById('scan-btn-' + _pendingScan.ns + '-' + _pendingScan.id);
+  if (btn) { btn.textContent = '⏳ ' + msg; btn.classList.add('scanning'); }
+};
+
+/** Called by Kotlin on success — fills in the card fields. */
+window.onBarcodeResult = function(ns, id, name, weight, servings, protein) {
+  _clearScanState(ns, id);
+
+  if (ns === 'pro') {
+    proUpdate(id, 'name',     name);
+    if (weight)   proUpdate(id, 'weight',   weight);
+    if (servings) proUpdate(id, 'servings', servings);
+    if (protein)  proUpdate(id, 'protein',  protein);
+    // Re-render to reflect new values in input fields
+    proRender();
+  } else {
+    tpUpdate(id, 'name', name);
+    tpRender();
+  }
+};
+
+/** Called by Kotlin on error or user cancel. */
+window.onBarcodeError = function(msg) {
+  _clearScanState(_pendingScan.ns, _pendingScan.id);
+  if (msg !== 'Camera cancelled') {
+    // Show inline on the card rather than a toast
+    const ns = _pendingScan.ns;
+    const id = _pendingScan.id;
+    const errEl = document.getElementById('scan-err-' + ns + '-' + id);
+    if (errEl) {
+      errEl.textContent = msg;
+      errEl.style.display = 'block';
+      setTimeout(() => { errEl.style.display = 'none'; }, 4000);
+    }
+  }
+};
+
+const _pendingScan = { ns: '', id: -1 };
+
+function _clearScanState(ns, id) {
+  _pendingScan.ns = ''; _pendingScan.id = -1;
+  const btn = document.getElementById('scan-btn-' + ns + '-' + id);
+  if (btn) { btn.textContent = '📷 scan barcode'; btn.classList.remove('scanning'); btn.disabled = false; }
+}
+
+function triggerScan(ns, id) {
+  if (!window.AndroidBridge) return;
+  _pendingScan.ns = ns;
+  _pendingScan.id = id;
+  const btn = document.getElementById('scan-btn-' + ns + '-' + id);
+  if (btn) { btn.textContent = '📷 opening camera…'; btn.classList.add('scanning'); btn.disabled = true; }
+  window.AndroidBridge.scanBarcode(ns, id);
+}
+
+// Mark body so CSS shows scan buttons only on Android
+if (window.AndroidBridge) {
+  document.body.classList.add('android-bridge-available');
+}
 </script>
 
 </body>
