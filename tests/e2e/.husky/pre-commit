@@ -124,23 +124,40 @@ fi
 
 # ── 7. Web files must be in sync between root and app/src/main/assets ──────────
 # root → GitHub Pages (web users), assets → Android WebView (app users).
-# Both sets must be identical. Files: index.html + 5 JS modules.
+# Auto-fix: if root/wf is staged, copy to assets and re-stage (and vice-versa).
+# Never blocks — the cp is done for you.
 WEB_FILES="index.html darkmode.js nav.js tp.js protein.js init.js"
-SYNC_ERROR=""
+SYNCED=""
 for wf in $WEB_FILES; do
   ROOT_F="$wf"
   ASSET_F="app/src/main/assets/$wf"
-  if echo "$STAGED" | grep -qE "(^$ROOT_F$|^$ASSET_F$)"; then
-    if [ -f "$ROOT_F" ] && [ -f "$ASSET_F" ]; then
+  ROOT_STAGED=$(echo "$STAGED" | grep -c "^${ROOT_F}$" || true)
+  ASSET_STAGED=$(echo "$STAGED" | grep -c "^${ASSET_F}$" || true)
+
+  if [ "$ROOT_STAGED" -gt 0 ] || [ "$ASSET_STAGED" -gt 0 ]; then
+    if [ -f "$ROOT_F" ] && [ ! -f "$ASSET_F" ]; then
+      # assets copy missing — create it
+      mkdir -p "$(dirname "$ASSET_F")"
+      cp "$ROOT_F" "$ASSET_F"
+      git add "$ASSET_F"
+      SYNCED="$SYNCED $wf"
+    elif [ -f "$ROOT_F" ] && [ -f "$ASSET_F" ]; then
       if ! diff -q "$ROOT_F" "$ASSET_F" >/dev/null 2>&1; then
-        SYNC_ERROR="$SYNC_ERROR $wf"
+        # Root staged (or both): root is authoritative. Assets-only change: assets wins.
+        if [ "$ROOT_STAGED" -gt 0 ]; then
+          cp "$ROOT_F" "$ASSET_F"
+          git add "$ASSET_F"
+        else
+          cp "$ASSET_F" "$ROOT_F"
+          git add "$ROOT_F"
+        fi
+        SYNCED="$SYNCED $wf"
       fi
     fi
   fi
 done
-if [ -n "$SYNC_ERROR" ]; then
-  error "Web files out of sync between root/ and app/src/main/assets/:$SYNC_ERROR"
-  printf "     Fix: for f in index.html darkmode.js nav.js tp.js protein.js init.js; do cp \"\$f\" \"app/src/main/assets/\$f\"; done\n" >&2
+if [ -n "$SYNCED" ]; then
+  warn "Web files auto-synced root ↔ assets (re-staged):$SYNCED"
 else
   ok "Web files in sync (root == assets)"
 fi
