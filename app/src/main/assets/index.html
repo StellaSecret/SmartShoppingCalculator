@@ -393,10 +393,22 @@
         <h1>🛒 smart shopping calculator</h1>
         <p>Stop guessing — compare products by what actually matters.</p>
       </div>
-      <button id="dark-btn" onclick="toggleDark()"
-        style="flex-shrink:0;margin-top:2px;padding:6px 12px;font-family:var(--mono);font-size:0.78rem;border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:4px;cursor:pointer;transition:all 0.15s;white-space:nowrap;">
-        🌙 dark
-      </button>
+      <div style="display:flex;gap:6px;flex-shrink:0;margin-top:2px;">
+        <select id="currency-select" onchange="setCurrency(this.value)"
+          style="padding:6px 8px;font-family:var(--mono);font-size:0.78rem;border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:4px;cursor:pointer;transition:all 0.15s;outline:none;">
+          <option value="€">€ EUR</option>
+          <option value="$">$ USD</option>
+          <option value="£">£ GBP</option>
+          <option value="CHF">CHF</option>
+          <option value="¥">¥ JPY</option>
+          <option value="C$">C$ CAD</option>
+          <option value="A$">A$ AUD</option>
+        </select>
+        <button id="dark-btn" onclick="toggleDark()"
+          style="padding:6px 12px;font-family:var(--mono);font-size:0.78rem;border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:4px;cursor:pointer;transition:all 0.15s;white-space:nowrap;">
+          🌙 dark
+        </button>
+      </div>
     </div>
   </header>
 
@@ -488,6 +500,39 @@ function toggleDark() {
   if (saved === 'dark' || (!saved && prefersDark)) {
     document.body.classList.add('dark');
     document.getElementById('dark-btn').textContent = '☀️ light';
+  }
+})();
+
+/* ══════════════════════════════════════════════
+   CURRENCY
+══════════════════════════════════════════════ */
+let CUR = '€';
+
+function setCurrency(symbol) {
+  CUR = symbol;
+  localStorage.setItem('currency', symbol);
+  // Re-render whichever page is active
+  if (document.getElementById('page-tp').classList.contains('visible')) {
+    tpCalc();
+  } else {
+    proCalc();
+  }
+  // Update price field labels
+  document.querySelectorAll('.price-label').forEach(el => {
+    el.textContent = 'Price (' + CUR + ')';
+  });
+}
+
+(function initCurrency() {
+  const saved = localStorage.getItem('currency');
+  if (saved) {
+    CUR = saved;
+    const sel = document.getElementById('currency-select');
+    if (sel) {
+      // Select matching option, or keep € if not found
+      const opt = Array.from(sel.options).find(o => o.value === saved);
+      if (opt) sel.value = saved;
+    }
   }
 })();
 </script>
@@ -675,17 +720,17 @@ function tpCalc() {
       const g = rf(r, 'totalW') - rf(r, 'tubeW');
       r.unit      = (price !== null && g > 0) ? price / g : null;
       r.detail    = g > 0 ? g.toFixed(0) + 'g paper' : null;
-      r.unitLabel = '€/g paper';
+      r.unitLabel = CUR + '/g paper';
     } else if (tpMethod === 'sheets') {
       const area  = rf(r, 'sheets') * rf(r, 'sheetLen') * rf(r, 'sheetWid') / 1000;
       r.unit      = (price !== null && area > 0) ? (price / area) * 100 : null;
       r.detail    = area > 0 ? area.toFixed(0) + ' cm²' : null;
-      r.unitLabel = '€/100cm²';
+      r.unitLabel = CUR + '/100cm²';
     } else if (tpMethod === 'diameter') {
       const vol   = Math.PI * ((rf(r, 'outer') / 2) ** 2 - (rf(r, 'inner') / 2) ** 2) * rf(r, 'width') / 1000;
       r.unit      = (price !== null && vol > 0) ? price / vol : null;
       r.detail    = vol > 0 ? vol.toFixed(0) + ' cm³' : null;
-      r.unitLabel = '€/cm³';
+      r.unitLabel = CUR + '/cm³';
     } else {
       // hand estimation
       const outerEst  = rf(r, 'hOuter') * fingerW;
@@ -695,7 +740,7 @@ function tpCalc() {
       const vol       = Math.PI * ((outerEst / 2) ** 2 - (tubeEst / 2) ** 2) * widthEst / 1000;
       r.unit      = (price !== null && vol > 0) ? price / vol : null;
       r.detail    = vol > 0 ? '~' + vol.toFixed(0) + ' cm³ est.' : null;
-      r.unitLabel = '€/cm³ est.';
+      r.unitLabel = CUR + '/cm³ est.';
     }
     r.pricePerRoll = price ?? 0;
     r.valid = r.unit !== null && !isNaN(r.unit);
@@ -721,7 +766,7 @@ function tpUpdateResults() {
       res.innerHTML = `
         <div class="cpg" style="color:${isBest ? 'var(--win)' : 'var(--text)'}">${tpfmt(r.unit)}</div>
         <div class="cpg-label">${r.unitLabel}</div>
-        <div class="extra">${r.detail} · €${r.pricePerRoll.toFixed(2)}/roll</div>
+        <div class="extra">${r.detail} · ${CUR}${r.pricePerRoll.toFixed(2)}/roll</div>
         ${isBest ? '<div class="winner-badge">best value</div>' : ''}
       `;
     } else {
@@ -778,9 +823,9 @@ function tpUpdateResults() {
       <div class="lifetime-block">
         <div class="lifetime-result">
           at <strong style="color:var(--text)">${usageWeek} roll${usageWeek !== 1 ? 's' : ''}/week</strong>
-          · best option costs <strong style="color:var(--win)">€${costBest.toFixed(0)}/yr</strong>
-          vs €${costWorst.toFixed(0)}/yr for the most expensive
-          — you save <strong>€${saveYear}/year</strong>.
+          · best option costs <strong style="color:var(--win)">${CUR}${costBest.toFixed(0)}/yr</strong>
+          vs ${CUR}${costWorst.toFixed(0)}/yr for the most expensive
+          — you save <strong>${CUR}${saveYear}/year</strong>.
         </div>
       </div>`;
   }
@@ -831,7 +876,7 @@ function tpRender() {
         </div>
         ${tpRolls.length > 1 ? `<button class="remove-btn" onclick="tpRemove(${r.id})">×</button>` : ''}
       </div>
-      <div class="field"><label>Price (€)</label>
+      <div class="field"><label class="price-label">Price (${CUR})</label>
         <input type="number" value="${r.price}" min="0" step="0.01" placeholder="e.g. 1.99"
           oninput="tpUpdate(${r.id},'price',this.value)"></div>
       <div class="field"><label>Rolls in pack</label>
@@ -995,9 +1040,9 @@ function proUpdateResults() {
     if (p.valid) {
       const isBest = best && p.id === best.id && valid.length > 1;
       res.innerHTML = `
-        <div class="cpg" style="color:${isBest ? 'var(--win)' : 'var(--text)'}">€${p.cpg.toFixed(4)}</div>
+        <div class="cpg" style="color:${isBest ? 'var(--win)' : 'var(--text)'}">${CUR}${p.cpg.toFixed(4)}</div>
         <div class="cpg-label">per gram of protein</div>
-        <div class="extra">${p.totalProtein.toFixed(0)}g total · €${(parseFloat(p.price) / parseFloat(p.servings)).toFixed(2)}/serving</div>
+        <div class="extra">${p.totalProtein.toFixed(0)}g total · ${CUR}${(parseFloat(p.price) / parseFloat(p.servings)).toFixed(2)}/serving</div>
         ${isBest ? '<div class="winner-badge">best value</div>' : ''}
       `;
     } else {
@@ -1035,7 +1080,7 @@ function proUpdateResults() {
         <span class="rank-num">${i + 1}.</span>
         <span class="dot" style="background:${COLORS[p.idx].dot}"></span>
         <span class="rank-name">${p.name || 'Powder ' + (p.idx + 1)}</span>
-        <span class="rank-val">€${p.cpg.toFixed(4)}/g</span>
+        <span class="rank-val">${CUR}${p.cpg.toFixed(4)}/g</span>
         ${i === 0
           ? '<span class="tag-best">best value</span>'
           : `<span class="tag-more">+${more}%</span>`}
@@ -1059,9 +1104,9 @@ function proUpdateResults() {
     lifetimeHtml = `
       <div class="lifetime-result">
         at <strong style="color:var(--text)">${usageWeek} serving${usageWeek !== 1 ? 's' : ''}/week</strong>
-        · best option costs <strong style="color:var(--win)">€${costPerYearBest.toFixed(0)}/yr</strong>
-        vs €${costPerYearWorst.toFixed(0)}/yr for the most expensive
-        — you save <strong>€${saveYear}/year</strong>.
+        · best option costs <strong style="color:var(--win)">${CUR}${costPerYearBest.toFixed(0)}/yr</strong>
+        vs ${CUR}${costPerYearWorst.toFixed(0)}/yr for the most expensive
+        — you save <strong>${CUR}${saveYear}/year</strong>.
       </div>`;
   }
 
@@ -1111,7 +1156,7 @@ function proRender() {
         </div>
         ${proPowders.length > 1 ? `<button class="remove-btn" onclick="proRemove(${p.id})">×</button>` : ''}
       </div>
-      <div class="field"><label>Price (€)</label>
+      <div class="field"><label class="price-label">Price (${CUR})</label>
         <input type="number" value="${p.price}" min="0" step="0.01" placeholder="e.g. 29.99"
           oninput="proUpdate(${p.id},'price',this.value)"></div>
       <div class="field"><label>Bag weight (g)</label>
