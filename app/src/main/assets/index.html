@@ -391,9 +391,13 @@
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
       <div>
         <h1>🛒 smart shopping calculator</h1>
-        <p>Stop guessing — compare products by what actually matters.</p>
+        <p id='subtitle-p'>Stop guessing — compare products by what actually matters.</p>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0;margin-top:2px;">
+        <button id="lang-btn" onclick="toggleLang()"
+          style="padding:6px 12px;font-family:var(--mono);font-size:0.78rem;border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:4px;cursor:pointer;transition:all 0.15s;white-space:nowrap;">
+          FR
+        </button>
         <select id="currency-select" onchange="setCurrency(this.value)"
           style="padding:6px 8px;font-family:var(--mono);font-size:0.78rem;border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:4px;cursor:pointer;transition:all 0.15s;outline:none;">
           <option value="€">€ EUR</option>
@@ -413,8 +417,8 @@
   </header>
 
   <nav class="nav-tabs">
-    <button class="nav-tab active" onclick="showPage('tp', this)">🧻 toilet paper</button>
-    <button class="nav-tab" onclick="showPage('pro', this)">💪 protein powder</button>
+    <button class="nav-tab active" onclick="showPage('tp', this)"id='nav-tab-tp'>🧻 toilet paper</button>
+    <button class="nav-tab" onclick="showPage('pro', this)"id='nav-tab-pro'>💪 protein powder</button>
   </nav>
 
   <!-- TOILET PAPER -->
@@ -426,41 +430,41 @@
     <div class="session-bar">
       <button class="session-btn" id="tp-save-btn" onclick="saveSession('tp')" title="Save current rolls to browser storage">💾 save session</button>
       <button class="session-btn" id="tp-restore-btn" onclick="restoreSession('tp')" title="Restore last saved session">↩ restore</button>
-      <button class="session-btn" onclick="clearSession('tp')" title="Clear saved session">✕ clear saved</button>
+      <button class="session-btn" id="tp-clear-btn" onclick="clearSession('tp')" title="Clear saved session">✕ clear saved</button>
       <span class="session-toast" id="tp-toast"></span>
     </div>
     <div class="method-tabs">
-      <button class="tab-btn active" onclick="setTpMethod('weight', this)">By weight</button>
-      <button class="tab-btn" onclick="setTpMethod('sheets', this)">By sheet count</button>
-      <button class="tab-btn" onclick="setTpMethod('diameter', this)">By diameter</button>
-      <button class="tab-btn" onclick="setTpMethod('hand', this)">&#128075; By hand</button>
+      <button class="tab-btn active" id="tab-weight" onclick="setTpMethod('weight', this)">By weight</button>
+      <button class="tab-btn" id="tab-sheets" onclick="setTpMethod('sheets', this)">By sheet count</button>
+      <button class="tab-btn" id="tab-diameter" onclick="setTpMethod('diameter', this)">By diameter</button>
+      <button class="tab-btn" id="tab-hand" onclick="setTpMethod('hand', this)">&#128075; By hand</button>
     </div>
 
     <!-- HAND CALIBRATION PANEL -->
     <div id="hand-calibration" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;margin-bottom:1.5rem;">
-      <div style="font-family:var(--mono);font-size:0.78rem;color:var(--muted);margin-bottom:0.75rem;">your hand measurements <span style="font-size:0.68rem;">(set once, used for all rolls)</span></div>
+      <div style="font-family:var(--mono);font-size:0.78rem;color:var(--muted);margin-bottom:0.75rem;"><span id='hand-title-txt'>your hand measurements</span> <span id='hand-sub-txt' style="font-size:0.68rem;">(set once, used for all rolls)</span></div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
         <div class="field">
-          <label>finger width (mm)</label>
+          <label id='lbl-hand-finger'>finger width (mm)</label>
           <input type="number" id="hand-finger" value="18" min="10" max="30" step="1" oninput="tpCalc()">
         </div>
         <div class="field">
-          <label>palm width (mm)</label>
+          <label id='lbl-hand-palm'>palm width (mm)</label>
           <input type="number" id="hand-palm" value="85" min="50" max="130" step="1" oninput="tpCalc()">
         </div>
         <div class="field">
-          <label>thumb length (mm)</label>
+          <label id='lbl-hand-thumb'>thumb length (mm)</label>
           <input type="number" id="hand-thumb" value="60" min="40" max="90" step="1" oninput="tpCalc()">
         </div>
       </div>
       <div style="font-size:0.7rem;color:var(--muted);font-family:var(--mono);margin-top:6px;">
-        Tip: measure your finger width and palm width with a ruler once. Defaults are average adult values.
+<span id='hand-tip-txt'>Tip: measure your finger width and palm width with a ruler once. Defaults are average adult values.</span>
       </div>
     </div>
 
     <div class="cards-grid" id="tp-grid"></div>
     <div class="results-summary" id="tp-results">
-      <div class="empty">add at least two rolls to compare</div>
+      <div class="empty" id="tp-empty-msg">add at least two rolls to compare</div>
     </div>
   </div>
 
@@ -473,17 +477,362 @@
     <div class="session-bar">
       <button class="session-btn" id="pro-save-btn" onclick="saveSession('pro')" title="Save current powders to browser storage">💾 save session</button>
       <button class="session-btn" id="pro-restore-btn" onclick="restoreSession('pro')" title="Restore last saved session">↩ restore</button>
-      <button class="session-btn" onclick="clearSession('pro')" title="Clear saved session">✕ clear saved</button>
+      <button class="session-btn" id="pro-clear-btn" onclick="clearSession('pro')" title="Clear saved session">✕ clear saved</button>
       <span class="session-toast" id="pro-toast"></span>
     </div>
     <div class="cards-grid" id="pro-grid"></div>
     <div class="results-summary" id="pro-summary">
-      <div class="empty">add at least two powders to compare</div>
+      <div class="empty" id="pro-empty-msg">add at least two powders to compare</div>
     </div>
   </div>
 
-  <footer>no data is sent anywhere · runs entirely in your browser</footer>
+  <footer id='app-footer'>no data is sent anywhere · runs entirely in your browser</footer>
 </div>
+
+<script>
+/* ══════════════════════════════════════════════
+   INTERNATIONALISATION
+   Add languages by extending STRINGS below.
+   All user-visible text goes through t(key).
+══════════════════════════════════════════════ */
+const STRINGS = {
+  en: {
+    // Header
+    subtitle:          'Stop guessing — compare products by what actually matters.',
+    darkBtn:           '🌙 dark',
+    lightBtn:          '☀️ light',
+
+    // Nav tabs
+    tabTp:             '🧻 toilet paper',
+    tabPro:            '💪 protein powder',
+
+    // Add buttons
+    addRoll:           '+ add roll',
+    addPowder:         '+ add powder',
+    countRolls:        (n) => n + ' / 4 rolls',
+    countPowders:      (n) => n + ' / 4 powders',
+
+    // Session bar
+    saveSession:       '💾 save session',
+    saveSessionTitle:  'Save current rolls to browser storage',
+    restoreSession:    '↩ restore',
+    restoreTitle:      'Restore last saved session',
+    clearSaved:        '✕ clear saved',
+    clearTitle:        'Clear saved session',
+    toastSaved:        '✓ saved',
+    toastRestored:     '✓ restored',
+    toastRestoreFail:  'restore failed',
+    toastCleared:      'cleared',
+    saveSessionTitlePro: 'Save current powders to browser storage',
+
+    // Method tabs
+    byWeight:          'By weight',
+    bySheets:          'By sheet count',
+    byDiameter:        'By diameter',
+    byHand:            '👋 By hand',
+
+    // Hand calibration
+    handTitle:         'your hand measurements',
+    handSubtitle:      '(set once, used for all rolls)',
+    handFinger:        'finger width (mm)',
+    handPalm:          'palm width (mm)',
+    handThumb:         'thumb length (mm)',
+    handTip:           'Tip: measure your finger width and palm width with a ruler once. Defaults are average adult values.',
+
+    // Card fields — TP
+    cardName:          'Name',
+    cardPrice:         (cur) => 'Price (' + cur + ')',
+    rollsInPack:       'Rolls in pack',
+    totalWeight:       'Total roll weight (g)',
+    tubeWeight:        'Tube weight (g)',
+    sheetCount:        'Sheet count',
+    sheetLength:       'Sheet length (mm)',
+    sheetWidth:        'Sheet width (mm)',
+    outerDiam:         'Outer diameter (mm)',
+    tubeDiam:          'Tube diameter (mm)',
+    rollWidth:         'Roll width (mm)',
+    handRollDiam:      'roll diameter — finger-widths across',
+    handTubeSize:      'tube size',
+    handTubeOpt1:      'fits 1 finger (~40mm, standard)',
+    handTubeOpt2:      'fits 2 fingers (~36mm, compact)',
+    handRollWidth:     'roll width',
+    handWidthOpt1:     'about 1 palm wide (~85mm)',
+    handWidthOpt2:     'about 1 thumb length (~60mm)',
+    handWidthOpt3:     'about 5 finger-widths',
+    handWidthOpt4:     'about 6 finger-widths',
+    handEstTip:        'estimate how many fingers wide the roll is when looking at it straight on',
+
+    // Card results — TP
+    fillFields:        'fill in all fields',
+    perRoll:           '/roll',
+    bestValue:         'best value',
+
+    // Summary — TP
+    emptyTp:           'add at least two rolls to compare',
+    emptyTpValid:      'add at least two valid rolls to compare',
+    rankingPrefix:     'ranking — ',
+    methodWeight:      'cost per gram of paper',
+    methodSheets:      'cost per 100cm²',
+    methodDiam:        'cost per cm³',
+    methodHand:        'estimated cost per cm³ (hand method)',
+    choosingSaves:     (name, pct) => `choosing <strong style="color:var(--text)">${name}</strong> over the most expensive saves you <strong style="color:var(--win)">${pct}%</strong>.`,
+
+    // Lifetime — TP
+    lifetimeTitle:     'lifetime cost projection',
+    rollsPerWeekLbl:   'rolls used per week',
+    rollsPerWeekPh:    'e.g. 1',
+    lifetimeTp:        (n, best, worst, save, cur) =>
+      `at <strong style="color:var(--text)">${n} roll${n !== 1 ? 's' : ''}/week</strong>` +
+      ` · best option costs <strong style="color:var(--win)">${cur}${best}/yr</strong>` +
+      ` vs ${cur}${worst}/yr for the most expensive` +
+      ` — you save <strong>${cur}${save}/year</strong>.`,
+
+    // Card fields — protein
+    bagWeight:         'Bag weight (g)',
+    servingsPerBag:    'Servings per bag',
+    proteinPerServing: 'Protein per serving (g)',
+
+    // Card results — protein
+    perGramProtein:    'per gram of protein',
+    perServing:        '/serving',
+
+    // Summary — protein
+    emptyPro:          'add at least two powders to compare',
+    emptyProValid:     'add at least two valid powders to compare',
+    rankingProtein:    'ranking — cost per gram of protein',
+    incompleteLabel:   'incomplete',
+    choosingSavesPro:  (name, pct) => `choosing <strong style="color:var(--text)">${name}</strong> over the most expensive saves you <strong style="color:var(--win)">${pct}%</strong> per gram of protein.`,
+
+    // Lifetime — protein
+    servingsPerWeekLbl: 'servings per week',
+    servingsPerWeekPh:  'e.g. 5',
+    lifetimePro:        (n, best, worst, save, cur) =>
+      `at <strong style="color:var(--text)">${n} serving${n !== 1 ? 's' : ''}/week</strong>` +
+      ` · best option costs <strong style="color:var(--win)">${cur}${best}/yr</strong>` +
+      ` vs ${cur}${worst}/yr for the most expensive` +
+      ` — you save <strong>${cur}${save}/year</strong>.`,
+
+    // Scan
+    scanBtn:           '📷 scan barcode',
+    scanOpening:       '📷 opening camera…',
+    scanLooking:       '⏳ Looking up barcode…',
+
+    // Footer
+    footer:            'no data is sent anywhere · runs entirely in your browser',
+  },
+
+  fr: {
+    subtitle:          'Fini les approximations — comparez les produits par ce qui compte vraiment.',
+    darkBtn:           '🌙 sombre',
+    lightBtn:          '☀️ clair',
+
+    tabTp:             '🧻 papier toilette',
+    tabPro:            '💪 protéine en poudre',
+
+    addRoll:           '+ ajouter un rouleau',
+    addPowder:         '+ ajouter une poudre',
+    countRolls:        (n) => n + ' / 4 rouleaux',
+    countPowders:      (n) => n + ' / 4 poudres',
+
+    saveSession:       '💾 sauvegarder',
+    saveSessionTitle:  'Sauvegarder les rouleaux dans le navigateur',
+    restoreSession:    '↩ restaurer',
+    restoreTitle:      'Restaurer la dernière session sauvegardée',
+    clearSaved:        '✕ effacer',
+    clearTitle:        'Effacer la session sauvegardée',
+    toastSaved:        '✓ sauvegardé',
+    toastRestored:     '✓ restauré',
+    toastRestoreFail:  'échec de restauration',
+    toastCleared:      'effacé',
+    saveSessionTitlePro: 'Sauvegarder les poudres dans le navigateur',
+
+    byWeight:          'Par poids',
+    bySheets:          'Par nombre de feuilles',
+    byDiameter:        'Par diamètre',
+    byHand:            '👋 À la main',
+
+    handTitle:         'mesures de votre main',
+    handSubtitle:      '(à définir une fois, utilisé pour tous les rouleaux)',
+    handFinger:        "largeur d'un doigt (mm)",
+    handPalm:          'largeur de la paume (mm)',
+    handThumb:         'longueur du pouce (mm)',
+    handTip:           "Conseil : mesurez la largeur d'un doigt et de votre paume avec une règle une fois. Les valeurs par défaut correspondent à un adulte moyen.",
+
+    cardName:          'Nom',
+    cardPrice:         (cur) => 'Prix (' + cur + ')',
+    rollsInPack:       'Rouleaux par paquet',
+    totalWeight:       'Poids total du rouleau (g)',
+    tubeWeight:        'Poids du tube (g)',
+    sheetCount:        'Nombre de feuilles',
+    sheetLength:       "Longueur d'une feuille (mm)",
+    sheetWidth:        "Largeur d'une feuille (mm)",
+    outerDiam:         'Diamètre extérieur (mm)',
+    tubeDiam:          'Diamètre du tube (mm)',
+    rollWidth:         'Largeur du rouleau (mm)',
+    handRollDiam:      'diamètre du rouleau — largeurs de doigt',
+    handTubeSize:      'taille du tube',
+    handTubeOpt1:      'rentre 1 doigt (~40mm, standard)',
+    handTubeOpt2:      'rentre 2 doigts (~36mm, compact)',
+    handRollWidth:     'largeur du rouleau',
+    handWidthOpt1:     'environ 1 paume (~85mm)',
+    handWidthOpt2:     'environ 1 longueur de pouce (~60mm)',
+    handWidthOpt3:     'environ 5 largeurs de doigt',
+    handWidthOpt4:     'environ 6 largeurs de doigt',
+    handEstTip:        'estimez combien de doigts de large fait le rouleau vu de face',
+
+    fillFields:        'remplissez tous les champs',
+    perRoll:           '/rouleau',
+    bestValue:         'meilleur rapport',
+
+    emptyTp:           'ajoutez au moins deux rouleaux à comparer',
+    emptyTpValid:      'ajoutez au moins deux rouleaux valides à comparer',
+    rankingPrefix:     'classement — ',
+    methodWeight:      'coût par gramme de papier',
+    methodSheets:      'coût par 100cm²',
+    methodDiam:        'coût par cm³',
+    methodHand:        'coût estimé par cm³ (méthode main)',
+    choosingSaves:     (name, pct) => `choisir <strong style="color:var(--text)">${name}</strong> plutôt que le plus cher vous fait économiser <strong style="color:var(--win)">${pct}%</strong>.`,
+
+    lifetimeTitle:     'projection sur un an',
+    rollsPerWeekLbl:   'rouleaux utilisés par semaine',
+    rollsPerWeekPh:    'ex. 1',
+    lifetimeTp:        (n, best, worst, save, cur) =>
+      `à <strong style="color:var(--text)">${n} rouleau${n !== 1 ? 'x' : ''}/semaine</strong>` +
+      ` · la meilleure option coûte <strong style="color:var(--win)">${cur}${best}/an</strong>` +
+      ` contre ${cur}${worst}/an pour la plus chère` +
+      ` — vous économisez <strong>${cur}${save}/an</strong>.`,
+
+    bagWeight:         'Poids du sachet (g)',
+    servingsPerBag:    'Portions par sachet',
+    proteinPerServing: 'Protéines par portion (g)',
+
+    perGramProtein:    'par gramme de protéine',
+    perServing:        '/portion',
+
+    emptyPro:          'ajoutez au moins deux poudres à comparer',
+    emptyProValid:     'ajoutez au moins deux poudres valides à comparer',
+    rankingProtein:    'classement — coût par gramme de protéine',
+    incompleteLabel:   'incomplet',
+    choosingSavesPro:  (name, pct) => `choisir <strong style="color:var(--text)">${name}</strong> plutôt que la plus chère vous fait économiser <strong style="color:var(--win)">${pct}%</strong> par gramme de protéine.`,
+
+    servingsPerWeekLbl: 'portions par semaine',
+    servingsPerWeekPh:  'ex. 5',
+    lifetimePro:        (n, best, worst, save, cur) =>
+      `à <strong style="color:var(--text)">${n} portion${n !== 1 ? 's' : ''}/semaine</strong>` +
+      ` · la meilleure option coûte <strong style="color:var(--win)">${cur}${best}/an</strong>` +
+      ` contre ${cur}${worst}/an pour la plus chère` +
+      ` — vous économisez <strong>${cur}${save}/an</strong>.`,
+
+    scanBtn:           '📷 scanner le code-barres',
+    scanOpening:       '📷 ouverture de la caméra…',
+    scanLooking:       '⏳ Recherche du produit…',
+
+    footer:            'aucune donnée envoyée · fonctionne entièrement dans votre navigateur',
+  },
+};
+
+let LANG = 'en';
+function t(key, ...args) {
+  const v = (STRINGS[LANG] || STRINGS.en)[key];
+  if (typeof v === 'function') return v(...args);
+  return v ?? key;
+}
+
+function toggleLang() {
+  LANG = LANG === 'en' ? 'fr' : 'en';
+  localStorage.setItem('lang', LANG);
+  applyLang();
+}
+
+function applyLang() {
+  // Update lang button
+  const btn = document.getElementById('lang-btn');
+  if (btn) btn.textContent = LANG === 'en' ? 'FR' : 'EN';
+  document.documentElement.lang = LANG;
+
+  // Static elements with IDs
+  const sub = document.getElementById('subtitle-p');
+  if (sub) sub.textContent = t('subtitle');
+
+  document.getElementById('dark-btn').textContent =
+    document.body.classList.contains('dark') ? t('lightBtn') : t('darkBtn');
+
+  // Nav tabs
+  const navTp  = document.getElementById('nav-tab-tp');
+  const navPro = document.getElementById('nav-tab-pro');
+  if (navTp)  navTp.textContent  = t('tabTp');
+  if (navPro) navPro.textContent = t('tabPro');
+
+  // Method tabs
+  const tabMap = { 'tab-weight': 'byWeight', 'tab-sheets': 'bySheets',
+                   'tab-diameter': 'byDiameter', 'tab-hand': 'byHand' };
+  Object.entries(tabMap).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = t(key);
+  });
+
+  // TP controls
+  const tpAddBtn = document.getElementById('tp-add-btn');
+  if (tpAddBtn) tpAddBtn.textContent = t('addRoll');
+
+  const tpSave = document.getElementById('tp-save-btn');
+  if (tpSave) { tpSave.textContent = t('saveSession'); tpSave.title = t('saveSessionTitle'); }
+  const tpRestore = document.getElementById('tp-restore-btn');
+  if (tpRestore) { tpRestore.textContent = t('restoreSession'); tpRestore.title = t('restoreTitle'); }
+  const tpClear = document.getElementById('tp-clear-btn');
+  if (tpClear) { tpClear.textContent = t('clearSaved'); tpClear.title = t('clearTitle'); }
+
+  // Hand calibration panel
+  const handTitleTxt = document.getElementById('hand-title-txt');
+  if (handTitleTxt) handTitleTxt.textContent = t('handTitle');
+  const handSubTxt = document.getElementById('hand-sub-txt');
+  if (handSubTxt) handSubTxt.textContent = t('handSubtitle');
+  const lblFinger = document.getElementById('lbl-hand-finger');
+  if (lblFinger) lblFinger.textContent = t('handFinger');
+  const lblPalm = document.getElementById('lbl-hand-palm');
+  if (lblPalm) lblPalm.textContent = t('handPalm');
+  const lblThumb = document.getElementById('lbl-hand-thumb');
+  if (lblThumb) lblThumb.textContent = t('handThumb');
+  const handTipTxt = document.getElementById('hand-tip-txt');
+  if (handTipTxt) handTipTxt.textContent = t('handTip');
+
+  // Pro controls
+  const proAddBtn = document.getElementById('pro-add-btn');
+  if (proAddBtn) proAddBtn.textContent = t('addPowder');
+  const proSave = document.getElementById('pro-save-btn');
+  if (proSave) { proSave.textContent = t('saveSession'); proSave.title = t('saveSessionTitlePro'); }
+  const proRestore = document.getElementById('pro-restore-btn');
+  if (proRestore) { proRestore.textContent = t('restoreSession'); proRestore.title = t('restoreTitle'); }
+  const proClear = document.getElementById('pro-clear-btn');
+  if (proClear) { proClear.textContent = t('clearSaved'); proClear.title = t('clearTitle'); }
+
+  // Empty state messages (when no items added yet)
+  const tpEmpty  = document.getElementById('tp-empty-msg');
+  if (tpEmpty)  tpEmpty.textContent  = t('emptyTp');
+  const proEmpty = document.getElementById('pro-empty-msg');
+  if (proEmpty) proEmpty.textContent = t('emptyPro');
+
+  // Footer
+  const footer = document.getElementById('app-footer');
+  if (footer) footer.textContent = t('footer');
+
+  // Re-render active page to update all dynamic strings
+  if (document.getElementById('page-tp').classList.contains('visible')) {
+    tpRender();
+  } else {
+    proRender();
+  }
+}
+
+(function initLang() {
+  const saved = localStorage.getItem('lang');
+  if (saved === 'fr' || saved === 'en') LANG = saved;
+  // Apply non-render parts immediately; render happens after init
+  const btn = document.getElementById('lang-btn');
+  if (btn) btn.textContent = LANG === 'en' ? 'FR' : 'EN';
+  document.documentElement.lang = LANG;
+})();
+</script>
 
 <script>
 /* ══════════════════════════════════════════════
@@ -492,14 +841,14 @@
 function toggleDark() {
   const isDark = document.body.classList.toggle('dark');
   localStorage.setItem('theme', isDark ? 'dark' : 'light');
-  document.getElementById('dark-btn').textContent = isDark ? '☀️ light' : '🌙 dark';
+  document.getElementById('dark-btn').textContent = isDark ? t('lightBtn') : t('darkBtn');
 }
 (function initTheme() {
   const saved = localStorage.getItem('theme');
   const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
   if (saved === 'dark' || (!saved && prefersDark)) {
     document.body.classList.add('dark');
-    document.getElementById('dark-btn').textContent = '☀️ light';
+    document.getElementById('dark-btn').textContent = t('lightBtn');
   }
 })();
 
@@ -536,6 +885,9 @@ function setCurrency(symbol) {
   }
 })();
 </script>
+
+
+
 
 <script>
 /* ══════════════════════════════════════════════
@@ -580,13 +932,13 @@ function saveSession(ns) {
     : { powders: proPowders, nextId: proId,
         proUsagePerWeek: document.getElementById('pro-usage-week')?.value };
   localStorage.setItem('ssc_session_' + ns, JSON.stringify(state));
-  showToast(ns, '✓ saved');
+  showToast(ns, t('toastSaved'));
   updateRestoreBtn(ns);
 }
 
 function restoreSession(ns) {
   const raw = localStorage.getItem('ssc_session_' + ns);
-  if (!raw) { showToast(ns, 'nothing saved yet'); return; }
+  if (!raw) { showToast(ns, t('toastRestoreFail')); return; }
   try {
     const state = JSON.parse(raw);
     if (ns === 'tp') {
@@ -619,15 +971,15 @@ function restoreSession(ns) {
         if (el) el.value = state.proUsagePerWeek;
       }
     }
-    showToast(ns, '✓ restored');
+    showToast(ns, t('toastRestored'));
   } catch (e) {
-    showToast(ns, 'restore failed');
+    showToast(ns, t('toastRestoreFail'));
   }
 }
 
 function clearSession(ns) {
   localStorage.removeItem('ssc_session_' + ns);
-  showToast(ns, 'cleared');
+  showToast(ns, t('toastCleared'));
   updateRestoreBtn(ns);
 }
 
@@ -720,7 +1072,7 @@ function tpCalc() {
       const g = rf(r, 'totalW') - rf(r, 'tubeW');
       r.unit      = (price !== null && g > 0) ? price / g : null;
       r.detail    = g > 0 ? g.toFixed(0) + 'g paper' : null;
-      r.unitLabel = CUR + '/g paper';
+      r.unitLabel = CUR + t('perGramPaper', '');
     } else if (tpMethod === 'sheets') {
       const area  = rf(r, 'sheets') * rf(r, 'sheetLen') * rf(r, 'sheetWid') / 1000;
       r.unit      = (price !== null && area > 0) ? (price / area) * 100 : null;
@@ -766,18 +1118,18 @@ function tpUpdateResults() {
       res.innerHTML = `
         <div class="cpg" style="color:${isBest ? 'var(--win)' : 'var(--text)'}">${tpfmt(r.unit)}</div>
         <div class="cpg-label">${r.unitLabel}</div>
-        <div class="extra">${r.detail} · ${CUR}${r.pricePerRoll.toFixed(2)}/roll</div>
-        ${isBest ? '<div class="winner-badge">best value</div>' : ''}
+        <div class="extra">${r.detail} · ${CUR}${r.pricePerRoll.toFixed(2)}${t('perRoll')}</div>
+        ${isBest ? "<div class=\"winner-badge\">" + t('bestValue') + "</div>" : ''}
       `;
     } else {
-      res.innerHTML = '<div class="cpg-label" style="margin-top:4px">fill in all fields</div>';
+      res.innerHTML = "<div class=\"cpg-label\" style=\"margin-top:4px\">" + t('fillFields') + "</div>";
     }
   });
 
   // Summary panel
   const el = document.getElementById('tp-results');
   if (valid.length < 2) {
-    el.innerHTML = '<div class="empty">add at least two valid rolls to compare</div>';
+    el.innerHTML = '<div class="empty">' + t('emptyTpValid') + '</div>';
     return;
   }
 
@@ -785,10 +1137,10 @@ function tpUpdateResults() {
   const worstVal  = worst.unit;
   const savings   = ((worstVal - bestVal) / worstVal * 100).toFixed(1);
   const methodLabel = {
-    weight:   'cost per gram of paper',
-    sheets:   'cost per 100cm²',
-    diameter: 'cost per cm³',
-    hand:     'estimated cost per cm³ (hand method)',
+    weight:   t('methodWeight'),
+    sheets:   t('methodSheets'),
+    diameter: t('methodDiam'),
+    hand:     t('methodHand'),
   }[tpMethod];
 
   const rows = valid.map((r, i) => {
@@ -802,7 +1154,7 @@ function tpUpdateResults() {
         <span class="rank-name">${r.name || 'Roll ' + (r.idx + 1)}</span>
         <span class="rank-val">${tpfmt(r.unit)} ${r.unitLabel}</span>
         ${i === 0
-          ? '<span class="tag-best">best value</span>'
+          ? "<span class=\"tag-best\">" + t('bestValue') + "</span>"
           : `<span class="tag-more">+${more}%</span>`}
       </div>
       <div class="cost-bar-track">
@@ -822,30 +1174,26 @@ function tpUpdateResults() {
     lifetimeHtml = `
       <div class="lifetime-block">
         <div class="lifetime-result">
-          at <strong style="color:var(--text)">${usageWeek} roll${usageWeek !== 1 ? 's' : ''}/week</strong>
-          · best option costs <strong style="color:var(--win)">${CUR}${costBest.toFixed(0)}/yr</strong>
-          vs ${CUR}${costWorst.toFixed(0)}/yr for the most expensive
-          — you save <strong>${CUR}${saveYear}/year</strong>.
+          ${t('lifetimeTp', usageWeek, costBest.toFixed(0), costWorst.toFixed(0), saveYear, CUR)}
         </div>
       </div>`;
   }
 
   el.innerHTML = `
-    <div class="summary-title">ranking — ${methodLabel}</div>
+    <div class="summary-title">${t('rankingPrefix')}${methodLabel}</div>
     <ul class="rank-list">${rows}</ul>
     <div style="margin-top:12px;font-size:0.78rem;color:var(--muted);font-family:var(--mono);">
-      choosing <strong style="color:var(--text)">${valid[0].name || 'the best option'}</strong>
-      over the most expensive saves you <strong style="color:var(--win)">${savings}%</strong>.
+      ${t('choosingSaves', valid[0].name || t('bestValue'), savings)}
     </div>
     <div class="lifetime-block">
       <div class="lifetime-header">
-        <span class="lifetime-title">lifetime cost projection</span>
+        <span class="lifetime-title">${t('lifetimeTitle')}</span>
       </div>
       <div class="lifetime-inputs">
-        <label>rolls used per week</label>
+        <label>${t('rollsPerWeekLbl')}</label>
         <input type="number" id="tp-usage-week" min="0.1" max="100" step="0.5"
           value="${document.getElementById('tp-usage-week')?.value || '1'}"
-          oninput="tpUpdateResults()" placeholder="e.g. 1">
+          oninput="tpUpdateResults()" placeholder="${t('rollsPerWeekPh')}">
       </div>
       ${lifetimeHtml}
     </div>
@@ -859,7 +1207,7 @@ function tpRender() {
   btn.style.opacity       = tpRolls.length >= 4 ? '0.4' : '1';
   btn.style.pointerEvents = tpRolls.length >= 4 ? 'none' : 'auto';
   document.getElementById('tp-count-label').textContent =
-    tpRolls.length > 0 ? tpRolls.length + ' / 4 rolls' : '';
+    tpRolls.length > 0 ? t('countRolls', tpRolls.length) : '';
 
   tpRolls.forEach(r => {
     const col  = COLORS[r.idx];
@@ -870,26 +1218,26 @@ function tpRender() {
       <div class="card-header">
         <div class="card-title">
           <span class="dot" style="background:${col.dot}"></span>
-          <input type="text" value="${r.name}" placeholder="Name"
+          <input type="text" value="${r.name}" placeholder="${t('cardName')}"
             style="border:none;background:transparent;font-family:var(--mono);font-size:0.82rem;font-weight:500;color:var(--text);width:100px;outline:none;padding:0;"
             oninput="tpUpdate(${r.id},'name',this.value)">
         </div>
         ${tpRolls.length > 1 ? `<button class="remove-btn" onclick="tpRemove(${r.id})">×</button>` : ''}
       </div>
-      <div class="field"><label class="price-label">Price (${CUR})</label>
+      <div class="field"><label class="price-label">${t('cardPrice', CUR)}</label>
         <input type="number" value="${r.price}" min="0" step="0.01" placeholder="e.g. 1.99"
           oninput="tpUpdate(${r.id},'price',this.value)"></div>
-      <div class="field"><label>Rolls in pack</label>
+      <div class="field"><label>${t('rollsInPack')}</label>
         <input type="number" value="${r.packs}" min="1" step="1" placeholder="e.g. 4"
           oninput="tpUpdate(${r.id},'packs',this.value)"></div>
       <div class="divider"></div>
 
       <div class="tp-section ${tpMethod === 'weight' ? 'visible' : ''}" id="tpsec-weight-${r.id}">
         ${tpMethod === 'weight' ? `
-        <div class="field"><label>Total roll weight (g)</label>
+        <div class="field"><label>${t('totalWeight')}</label>
           <input type="number" value="${r.totalW}" min="0" placeholder="e.g. 120"
             oninput="tpUpdate(${r.id},'totalW',this.value)"></div>
-        <div class="field"><label>Tube weight (g)</label>
+        <div class="field"><label>${t('tubeWeight')}</label>
           <input type="number" value="${r.tubeW}" min="0" placeholder="e.g. 15"
             oninput="tpUpdate(${r.id},'tubeW',this.value)"></div>
         ` : ''}
@@ -897,13 +1245,13 @@ function tpRender() {
 
       <div class="tp-section ${tpMethod === 'sheets' ? 'visible' : ''}" id="tpsec-sheets-${r.id}">
         ${tpMethod === 'sheets' ? `
-        <div class="field"><label>Sheet count</label>
+        <div class="field"><label>${t('sheetCount')}</label>
           <input type="number" value="${r.sheets}" min="1" placeholder="e.g. 200"
             oninput="tpUpdate(${r.id},'sheets',this.value)"></div>
-        <div class="field"><label>Sheet length (mm)</label>
+        <div class="field"><label>${t('sheetLength')}</label>
           <input type="number" value="${r.sheetLen}" min="1" placeholder="e.g. 113"
             oninput="tpUpdate(${r.id},'sheetLen',this.value)"></div>
-        <div class="field"><label>Sheet width (mm)</label>
+        <div class="field"><label>${t('sheetWidth')}</label>
           <input type="number" value="${r.sheetWid}" min="1" placeholder="e.g. 100"
             oninput="tpUpdate(${r.id},'sheetWid',this.value)"></div>
         ` : ''}
@@ -911,13 +1259,13 @@ function tpRender() {
 
       <div class="tp-section ${tpMethod === 'diameter' ? 'visible' : ''}" id="tpsec-diameter-${r.id}">
         ${tpMethod === 'diameter' ? `
-        <div class="field"><label>Outer diameter (mm)</label>
+        <div class="field"><label>${t('outerDiam')}</label>
           <input type="number" value="${r.outer}" min="1" placeholder="e.g. 110"
             oninput="tpUpdate(${r.id},'outer',this.value)"></div>
-        <div class="field"><label>Tube diameter (mm)</label>
+        <div class="field"><label>${t('tubeDiam')}</label>
           <input type="number" value="${r.inner}" min="1" placeholder="e.g. 40"
             oninput="tpUpdate(${r.id},'inner',this.value)"></div>
-        <div class="field"><label>Roll width (mm)</label>
+        <div class="field"><label>${t('rollWidth')}</label>
           <input type="number" value="${r.width}" min="1" placeholder="e.g. 100"
             oninput="tpUpdate(${r.id},'width',this.value)"></div>
         ` : ''}
@@ -926,37 +1274,37 @@ function tpRender() {
       <div class="tp-section ${tpMethod === 'hand' ? 'visible' : ''}" id="tpsec-hand-${r.id}">
         ${tpMethod === 'hand' ? `
         <div class="field">
-          <label>roll diameter — finger-widths across</label>
+          <label>${t('handRollDiam')}</label>
           <input type="number" value="${r.hOuter || ''}" min="1" max="15" step="0.5" placeholder="e.g. 6"
             oninput="tpUpdate(${r.id},'hOuter',this.value)">
         </div>
         <div class="field">
-          <label>tube size</label>
+          <label>${t('handTubeSize')}</label>
           <select oninput="tpUpdate(${r.id},'hTube',this.value)">
-            <option value="1" ${rf(r,'hTube') === 1 || !r.hTube ? 'selected' : ''}>fits 1 finger (~40mm, standard)</option>
-            <option value="2" ${rf(r,'hTube') === 2 ? 'selected' : ''}>fits 2 fingers (~36mm, compact)</option>
+            <option value="1" ${rf(r,'hTube') === 1 || !r.hTube ? 'selected' : ''}>${t('handTubeOpt1')}</option>
+            <option value="2" ${rf(r,'hTube') === 2 ? 'selected' : ''}>${t('handTubeOpt2')}</option>
           </select>
         </div>
         <div class="field">
-          <label>roll width</label>
+          <label>${t('handRollWidth')}</label>
           <select oninput="tpUpdate(${r.id},'hWidth',this.value)">
-            <option value="1" ${rf(r,'hWidth') === 1 || !r.hWidth ? 'selected' : ''}>about 1 palm wide (~85mm)</option>
-            <option value="2" ${rf(r,'hWidth') === 2 ? 'selected' : ''}>about 1 thumb length (~60mm)</option>
-            <option value="5" ${rf(r,'hWidth') === 5 ? 'selected' : ''}>about 5 finger-widths</option>
-            <option value="6" ${rf(r,'hWidth') === 6 ? 'selected' : ''}>about 6 finger-widths</option>
+            <option value="1" ${rf(r,'hWidth') === 1 || !r.hWidth ? 'selected' : ''}>${t('handWidthOpt1')}</option>
+            <option value="2" ${rf(r,'hWidth') === 2 ? 'selected' : ''}>${t('handWidthOpt2')}</option>
+            <option value="5" ${rf(r,'hWidth') === 5 ? 'selected' : ''}>${t('handWidthOpt3')}</option>
+            <option value="6" ${rf(r,'hWidth') === 6 ? 'selected' : ''}>${t('handWidthOpt4')}</option>
           </select>
         </div>
         <div style="font-size:0.68rem;color:var(--muted);font-family:var(--mono);margin-top:4px;line-height:1.4;">
-          estimate how many fingers wide the roll is when looking at it straight on
+          ${t('handEstTip')}
         </div>
         ` : ''}
       </div>
 
       <div class="card-result" id="tpres-${r.id}">
-        <div class="cpg-label" style="margin-top:4px">fill in all fields</div>
+        <div class="cpg-label" style="margin-top:4px">${t('fillFields')}</div>
       </div>
       <button class="scan-btn" id="scan-btn-tp-${r.id}"
-        onclick="triggerScan('tp',${r.id})">📷 scan barcode</button>
+        onclick="triggerScan('tp',${r.id})">${t('scanBtn')}</button>
       <div id="scan-err-tp-${r.id}"
         style="display:none;font-family:var(--mono);font-size:0.68rem;color:#c0392b;margin-top:4px;"></div>
     `;
@@ -1041,18 +1389,18 @@ function proUpdateResults() {
       const isBest = best && p.id === best.id && valid.length > 1;
       res.innerHTML = `
         <div class="cpg" style="color:${isBest ? 'var(--win)' : 'var(--text)'}">${CUR}${p.cpg.toFixed(4)}</div>
-        <div class="cpg-label">per gram of protein</div>
-        <div class="extra">${p.totalProtein.toFixed(0)}g total · ${CUR}${(parseFloat(p.price) / parseFloat(p.servings)).toFixed(2)}/serving</div>
-        ${isBest ? '<div class="winner-badge">best value</div>' : ''}
+        <div class="cpg-label">${t('perGramProtein')}</div>
+        <div class="extra">${p.totalProtein.toFixed(0)}g total · ${CUR}${(parseFloat(p.price) / parseFloat(p.servings)).toFixed(2)}${t('perServing')}</div>
+        ${isBest ? "<div class=\"winner-badge\">" + t('bestValue') + "</div>" : ''}
       `;
     } else {
-      res.innerHTML = '<div class="cpg-label" style="margin-top:4px">fill in all fields</div>';
+      res.innerHTML = "<div class=\"cpg-label\" style=\"margin-top:4px\">" + t('fillFields') + "</div>";
     }
   });
 
   const summary = document.getElementById('pro-summary');
   if (valid.length < 2) {
-    summary.innerHTML = '<div class="empty">add at least two valid powders to compare</div>';
+    summary.innerHTML = '<div class="empty">' + (proPowders.length === 0 ? t('emptyPro') : t('emptyProValid')) + '</div>';
     return;
   }
 
@@ -1082,7 +1430,7 @@ function proUpdateResults() {
         <span class="rank-name">${p.name || 'Powder ' + (p.idx + 1)}</span>
         <span class="rank-val">${CUR}${p.cpg.toFixed(4)}/g</span>
         ${i === 0
-          ? '<span class="tag-best">best value</span>'
+          ? "<span class=\"tag-best\">" + t('bestValue') + "</span>"
           : `<span class="tag-more">+${more}%</span>`}
       </div>
       <div class="cost-bar-track">
@@ -1103,29 +1451,25 @@ function proUpdateResults() {
     const saveYear = (costPerYearWorst - costPerYearBest).toFixed(2);
     lifetimeHtml = `
       <div class="lifetime-result">
-        at <strong style="color:var(--text)">${usageWeek} serving${usageWeek !== 1 ? 's' : ''}/week</strong>
-        · best option costs <strong style="color:var(--win)">${CUR}${costPerYearBest.toFixed(0)}/yr</strong>
-        vs ${CUR}${costPerYearWorst.toFixed(0)}/yr for the most expensive
-        — you save <strong>${CUR}${saveYear}/year</strong>.
+        ${t('lifetimePro', usageWeek, costPerYearBest.toFixed(0), costPerYearWorst.toFixed(0), saveYear, CUR)}
       </div>`;
   }
 
   summary.innerHTML = `
-    <div class="summary-title">ranking — cost per gram of protein</div>
+    <div class="summary-title">${t('rankingProtein')}</div>
     <ul class="rank-list">${rows}</ul>
     <div style="margin-top:12px;font-size:0.78rem;color:var(--muted);font-family:var(--mono);">
-      choosing <strong style="color:var(--text)">${valid[0].name || 'the best option'}</strong>
-      over the most expensive saves you <strong style="color:var(--win)">${savings}%</strong> per gram of protein.
+      ${t('choosingSavesPro', valid[0].name || t('bestValue'), savings)}
     </div>
     <div class="lifetime-block">
       <div class="lifetime-header">
-        <span class="lifetime-title">lifetime cost projection</span>
+        <span class="lifetime-title">${t('lifetimeTitle')}</span>
       </div>
       <div class="lifetime-inputs">
-        <label>servings per week</label>
+        <label>${t('servingsPerWeekLbl')}</label>
         <input type="number" id="pro-usage-week" min="1" max="50" step="1"
           value="${document.getElementById('pro-usage-week')?.value || '5'}"
-          oninput="proUpdateResults()" placeholder="e.g. 5">
+          oninput="proUpdateResults()" placeholder="${t('servingsPerWeekPh')}">
       </div>
       ${lifetimeHtml}
     </div>
@@ -1139,7 +1483,7 @@ function proRender() {
   btn.style.opacity       = proPowders.length >= 4 ? '0.4' : '1';
   btn.style.pointerEvents = proPowders.length >= 4 ? 'none' : 'auto';
   document.getElementById('pro-count-label').textContent =
-    proPowders.length > 0 ? proPowders.length + ' / 4 powders' : '';
+    proPowders.length > 0 ? t('countPowders', proPowders.length) : '';
 
   proPowders.forEach(p => {
     const col  = COLORS[p.idx];
@@ -1150,29 +1494,29 @@ function proRender() {
       <div class="card-header">
         <div class="card-title">
           <span class="dot" style="background:${col.dot}"></span>
-          <input type="text" value="${p.name}" placeholder="Name"
+          <input type="text" value="${p.name}" placeholder="${t('cardName')}"
             style="border:none;background:transparent;font-family:var(--mono);font-size:0.82rem;font-weight:500;color:var(--text);width:110px;outline:none;padding:0;"
             oninput="proUpdate(${p.id},'name',this.value)">
         </div>
         ${proPowders.length > 1 ? `<button class="remove-btn" onclick="proRemove(${p.id})">×</button>` : ''}
       </div>
-      <div class="field"><label class="price-label">Price (${CUR})</label>
+      <div class="field"><label class="price-label">${t('cardPrice', CUR)}</label>
         <input type="number" value="${p.price}" min="0" step="0.01" placeholder="e.g. 29.99"
           oninput="proUpdate(${p.id},'price',this.value)"></div>
-      <div class="field"><label>Bag weight (g)</label>
+      <div class="field"><label>${t('bagWeight')}</label>
         <input type="number" value="${p.weight}" min="0" step="1" placeholder="e.g. 1000"
           oninput="proUpdate(${p.id},'weight',this.value)"></div>
-      <div class="field"><label>Servings per bag</label>
+      <div class="field"><label>${t('servingsPerBag')}</label>
         <input type="number" value="${p.servings}" min="1" step="1" placeholder="e.g. 33"
           oninput="proUpdate(${p.id},'servings',this.value)"></div>
-      <div class="field"><label>Protein per serving (g)</label>
+      <div class="field"><label>${t('proteinPerServing')}</label>
         <input type="number" value="${p.protein}" min="0" step="0.1" placeholder="e.g. 25"
           oninput="proUpdate(${p.id},'protein',this.value)"></div>
       <div class="card-result" id="prores-${p.id}">
-        <div class="cpg-label" style="margin-top:4px">fill in all fields</div>
+        <div class="cpg-label" style="margin-top:4px">${t('fillFields')}</div>
       </div>
       <button class="scan-btn" id="scan-btn-pro-${p.id}"
-        onclick="triggerScan('pro',${p.id})">📷 scan barcode</button>
+        onclick="triggerScan('pro',${p.id})">${t('scanBtn')}</button>
       <div id="scan-err-pro-${p.id}"
         style="display:none;font-family:var(--mono);font-size:0.68rem;color:#c0392b;margin-top:4px;"></div>
     `;
@@ -1197,17 +1541,22 @@ function tpInit() {
 }
 
 function proInit() {
-  // Populate state without touching the DOM (page is hidden)
+  // Populate state and render into the DOM immediately.
+  // The protein page is hidden via CSS (.page / .page.visible),
+  // so rendering while hidden is safe and lets Playwright query #pro-grid right after goto().
   [0, 1].forEach(i => {
     const id  = proId++;
     const def = PRO_DEFAULTS[i];
     proPowders.push({ id, idx: i, ...def });
   });
+  proRender();
   updateRestoreBtn('pro');
 }
 
 tpInit();
 proInit();
+// Apply saved language after init — re-renders active page with correct strings
+if (LANG !== 'en') applyLang();
 </script>
 
 

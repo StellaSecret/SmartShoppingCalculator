@@ -10,15 +10,22 @@ export class CalcPage {
   // ── Navigation ───────────────────────────────────────────────────────────
   async goto() {
     await this.page.goto('');    // baseURL is already set to index.html
-    await this.page.waitForSelector('.nav-tabs');
+    // Wait until both grids have rendered their default cards.
+    // TP renders 2 cards on load; protein also renders 2 (but the grid
+    // may be hidden — waitForSelector checks DOM presence, not visibility).
+    await this.page.waitForSelector('#tp-grid .item-card');
+    await this.page.waitForSelector('#pro-grid .item-card', { state: 'attached' });
   }
 
   async switchToToiletPaper() {
-    await this.page.click('button.nav-tab:has-text("toilet paper")');
+    // Use id instead of text so emoji / locale changes don't break it
+    await this.page.click('.nav-tab[onclick*="\'tp\'"]');
+    await this.page.waitForSelector('#tp-grid .item-card');
   }
 
   async switchToProtein() {
-    await this.page.click('button.nav-tab:has-text("protein powder")');
+    await this.page.click('.nav-tab[onclick*="\'pro\'"]');
+    await this.page.waitForSelector('#pro-grid .item-card');
   }
 
   // ── Dark mode ────────────────────────────────────────────────────────────
@@ -28,11 +35,13 @@ export class CalcPage {
   // ── Toilet Paper helpers ─────────────────────────────────────────────────
   async addRoll()   { await this.page.click('#tp-add-btn'); }
   async setTpMethod(method: 'weight' | 'sheets' | 'diameter' | 'hand') {
-    const labels: Record<string, string> = {
-      weight: 'By weight', sheets: 'By sheet count',
-      diameter: 'By diameter', hand: 'By hand',
+    const ids: Record<string, string> = {
+      weight:   'tab-weight',
+      sheets:   'tab-sheets',
+      diameter: 'tab-diameter',
+      hand:     'tab-hand',
     };
-    await this.page.click(`.tab-btn:has-text("${labels[method]}")`);
+    await this.page.click(`#${ids[method]}`);
   }
 
   /**
@@ -112,6 +121,6 @@ export class CalcPage {
   proCards()   { return this.page.locator('#pro-grid .item-card'); }
 
   // ── Shared helpers ───────────────────────────────────────────────────────
-  winnerCard() { return this.page.locator('.item-card.winner'); }
+  winnerCard() { return this.page.locator('.page.visible .item-card.winner'); }
   rankItems()  { return this.page.locator('.page.visible .rank-item'); }
 }

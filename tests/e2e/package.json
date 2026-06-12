@@ -7,7 +7,7 @@
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
     "report": "playwright show-report",
-    "prepare": "cd ../.. && husky tests/e2e/.husky"
+    "prepare": "cd ../.. && husky tests/e2e/.husky && sed -i 's|sh -e \"$s\" \"$@\"|\"$s\"|' tests/e2e/.husky/_/h"
   },
   "devDependencies": {
     "@playwright/test": "^1.44.0",
