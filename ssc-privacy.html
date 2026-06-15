@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../privacy.css">
+<style>
+:root {
+  --bg: #0d0f14; --surface: #161920; --border: #2a2f3d;
+  --text: #e8eaf0; --muted: #9ca3af;
+  --accent: #6C63FF; --green: #43D9AD;
+}
+</style>
+<title>Politique de confidentialité — GameTracker</title>
+</head>
+<body>
+<div class="container">
+
+  <div class="lang-switcher">
+    <a href="privacy-en.html" class="lang-link">EN</a>
+  </div>
+
+  <a href="../" class="back">← Toutes les politiques</a>
+
+  <header>
+    <div class="app-name">GameTracker</div>
+    <h1>Politique de confidentialité</h1>
+    <div class="updated">Dernière mise à jour : mai 2026</div>
+  </header>
+
+  <div class="highlight">
+    <p>
+      <strong>En résumé :</strong> GameTracker ne collecte aucune donnée personnelle.
+      Toutes vos données de jeu sont stockées localement sur votre appareil.
+      La synchronisation Google Drive et les groupes temps réel sont des fonctionnalités
+      optionnelles que vous contrôlez entièrement.
+    </p>
+  </div>
+
+  <h2>1. Qui sommes-nous ?</h2>
+  <p>
+    GameTracker est une application mobile de suivi de scores pour jeux de société,
+    développée à titre personnel par StellaSecret. Elle n'est pas exploitée par une société commerciale.
+    Identifiant de l'application : <code>com.example.game_tracker</code>.
+  </p>
+
+  <h2>2. Données collectées</h2>
+  <p>
+    GameTracker ne collecte, ne stocke et ne transmet <strong>aucune donnée personnelle</strong>
+    vers nos serveurs. Nous n'avons pas de serveurs propres.
+  </p>
+  <p>
+    <span class="badge badge-red">✕</span> Aucune donnée d'identification (nom, email, téléphone)<br/>
+    <span class="badge badge-red">✕</span> Aucune donnée de localisation<br/>
+    <span class="badge badge-red">✕</span> Aucune donnée de navigation ou d'usage<br/>
+    <span class="badge badge-red">✕</span> Aucun identifiant publicitaire<br/>
+    <span class="badge badge-red">✕</span> Aucune donnée biométrique ou de santé
+  </p>
+  <p>
+    Les seules données créées par l'application sont les jeux, joueurs et parties
+    que vous saisissez vous-même. Ces données restent sur votre appareil, sauf si vous
+    activez explicitement la synchronisation Drive ou les groupes (voir sections 3 et 4).
+  </p>
+
+  <h2>3. Synchronisation Google Drive (optionnelle)</h2>
+  <p>
+    GameTracker propose une fonctionnalité de sauvegarde manuelle vers votre Google Drive personnel.
+    Cette fonctionnalité est <strong>entièrement optionnelle</strong> et nécessite votre autorisation explicite.
+  </p>
+  <ul>
+    <li>Les données sont stockées dans le dossier privé de l'application sur <em>votre</em> compte Google Drive (<code>appDataFolder</code>), invisible depuis l'interface Drive standard.</li>
+    <li>Seul vous pouvez accéder à ce dossier. Nous n'y avons pas accès.</li>
+    <li>Aucune donnée n'est transmise à nos serveurs lors de cette synchronisation.</li>
+    <li>Vous pouvez révoquer l'accès à tout moment depuis les <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer">paramètres de votre compte Google</a>.</li>
+  </ul>
+  <p>
+    Google peut collecter des données liées à l'utilisation de son service Drive selon sa propre
+    <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">politique de confidentialité</a>.
+  </p>
+
+  <h2>4. Groupes temps réel — Firebase (fonctionnalité Premium, optionnelle)</h2>
+  <p>
+    Les abonnés Premium peuvent créer des groupes de joueurs synchronisés en temps réel via
+    <strong>Google Firebase / Cloud Firestore</strong>. Cette fonctionnalité est <strong>entièrement optionnelle</strong>
+    et nécessite une connexion Google explicite.
+  </p>
+  <ul>
+    <li>Les données du groupe (jeux, joueurs, scores) sont stockées dans Firestore, accessible uniquement aux membres du groupe que vous invitez par email.</li>
+    <li>L'authentification est assurée par Firebase Authentication via votre compte Google.</li>
+    <li>Firebase peut collecter des données techniques (adresse IP, identifiants de session) selon la <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener noreferrer">politique de confidentialité de Firebase</a>.</li>
+    <li>Vous pouvez quitter un groupe ou supprimer vos données à tout moment depuis l'application.</li>
+  </ul>
+  <p>
+    <span class="badge badge-blue">ℹ</span> Cette fonctionnalité n'est pas disponible en version web de l'application.
+  </p>
+
+  <h2>5. Achats in-app — RevenueCat (fonctionnalité Premium)</h2>
+  <p>
+    Les abonnements Premium sont gérés via <strong>RevenueCat</strong>, un service tiers de gestion
+    des achats in-app. RevenueCat peut collecter un identifiant anonyme d'achat et des données
+    de transaction selon sa <a href="https://www.revenuecat.com/privacy" target="_blank" rel="noopener noreferrer">politique de confidentialité</a>.
+  </p>
+  <p>
+    Aucune information de paiement ne transite par nos applications ou serveurs —
+    les transactions sont gérées directement par le Google Play Store.
+  </p>
+
+  <h2>6. Stockage local</h2>
+  <p>
+    En l'absence de synchronisation activée, toutes vos données (jeux, joueurs, scores)
+    sont stockées uniquement dans la mémoire locale de votre appareil via <code>SharedPreferences</code>.
+  </p>
+  <p>
+    <span class="badge badge-green">✓</span> Aucun serveur distant ne reçoit vos données par défaut.<br/>
+    <span class="badge badge-green">✓</span> La désinstallation de l'application supprime toutes les données locales.<br/>
+    <span class="badge badge-green">✓</span> Aucune donnée n'est partagée entre utilisateurs sans votre accord explicite.
+  </p>
+
+  <h2>7. Publicité et analytics</h2>
+  <p>
+    GameTracker ne contient aucune publicité et n'intègre aucun outil d'analyse
+    ou de tracking (pas de Firebase Analytics, pas de Crashlytics, pas de SDK publicitaire).
+  </p>
+
+  <h2>8. Permissions Android utilisées</h2>
+  <ul>
+    <li><strong>INTERNET</strong> — obligatoire pour la synchronisation Google Drive et les groupes Firebase (uniquement si vous activez ces fonctionnalités).</li>
+  </ul>
+  <p>L'application ne demande aucune autre permission (pas d'accès à la caméra, aux contacts, à la localisation, au stockage externe, etc.).</p>
+
+  <h2>9. Vos droits (RGPD)</h2>
+  <p>
+    GameTracker ne traitant aucune donnée personnelle sur ses propres serveurs, les droits d'accès,
+    de rectification et de suppression s'exercent naturellement : vos données sont sur votre appareil,
+    sous votre contrôle total.
+  </p>
+  <p>
+    Si vous avez utilisé la synchronisation Drive ou les groupes Firebase et souhaitez supprimer
+    vos données distantes, vous pouvez le faire directement depuis l'application (quitter le groupe,
+    supprimer le backup Drive) ou en nous contactant.
+  </p>
+
+  <h2>10. Enfants</h2>
+  <p>
+    GameTracker n'est pas destiné aux enfants de moins de 13 ans et ne collecte sciemment
+    aucune information les concernant.
+  </p>
+
+  <h2>11. Modifications de cette politique</h2>
+  <p>
+    En cas de modification de cette politique, la date de mise à jour sera modifiée
+    en haut de cette page. Les changements significatifs seront signalés dans les
+    notes de mise à jour de l'application sur le Google Play Store.
+  </p>
+
+  <h2>12. Contact</h2>
+  <p>
+    Pour toute question concernant cette politique de confidentialité :
+    <a href="mailto:thaikhuevincent.nguyen@gmail.com">thaikhuevincent.nguyen@gmail.com</a>
+  </p>
+
+  <footer>
+    GameTracker · Politique de confidentialité · Mai 2026
+  </footer>
+
+</div>
+</body>
+</html>
