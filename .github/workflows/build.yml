@@ -179,7 +179,7 @@ jobs:
   deploy-pages:
     name: 🌐 Deploy GitHub Pages
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [test-kotlin, test-playwright]
     if: ${{ github.event_name != 'pull_request' }}
     permissions:
       pages: write
@@ -195,12 +195,21 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Assemble web/ folder
+        run: |
+          mkdir -p web
+          # Landing site files (index, demo, app pages)
+          # Privacy pages are hosted at stellasecret.github.io/privacy-pages/
+          cp web-src/index.html          web/index.html
+          cp web-src/demo.html           web/demo.html
+          cp web-src/app.html            web/app.html
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Deploy root dir: contains index.html, *.js modules, and privacy.html
-          # The assets/ copy is for the Android WebView — same files, different location.
-          path: .
+          # Deploy web/ subfolder: landing, demo, app pages.
+          # calculator.html lives in app/src/main/assets/ for the Android WebView only.
+          path: web
 
       - name: Deploy to GitHub Pages
         id: deploy

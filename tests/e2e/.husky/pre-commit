@@ -63,11 +63,11 @@ else
 fi
 
 # ── 4. No debug console.log in index.html ─────────────────────────────────────
-if echo "$STAGED" | grep -q "index.html"; then
-  if git show ":index.html" | grep -q "console\.log"; then
-    error "console.log found in index.html — remove before committing"
+if echo "$STAGED" | grep -q "calculator.html"; then
+  if git show ":calculator.html" | grep -q "console\.log"; then
+    error "console.log found in calculator.html — remove before committing"
   else
-    ok "No console.log in index.html"
+    ok "No console.log in calculator.html"
   fi
 fi
 
@@ -124,8 +124,8 @@ fi
 
 # ── 7. Web files must be in sync between root and app/src/main/assets ──────────
 # root → GitHub Pages (web users), assets → Android WebView (app users).
-# Both sets must be identical. Files: index.html + 5 JS modules.
-WEB_FILES="index.html darkmode.js nav.js tp.js protein.js init.js"
+# Both sets must be identical. Files: calculator.html + 5 JS modules.
+WEB_FILES="calculator.html darkmode.js nav.js tp.js protein.js init.js"
 SYNC_ERROR=""
 for wf in $WEB_FILES; do
   ROOT_F="$wf"

@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity() {
         if (savedInstanceState != null) {
             binding.webView.restoreState(savedInstanceState)
         } else {
-            binding.webView.loadUrl("file:///android_asset/index.html")
+            binding.webView.loadUrl("file:///android_asset/calculator.html")
         }
     }
 
