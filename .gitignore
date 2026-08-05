@@ -1,30 +1,12 @@
-*.iml
-.gradle
-/local.properties
-/.idea
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
+# Rust / Cargo
+/target
 
-# Signing — NEVER commit these
-key.properties
-*.jks
-*.keystore
-
-# gradle-wrapper.jar IS committed intentionally (recommended by Android docs)
-# Do NOT add gradle/wrapper/gradle-wrapper.jar here
-
-# package-lock.json ne doit exister QUE dans tests/e2e/, pas à la racine
-/package-lock.json
-/package.json
-
-# Dev tooling node_modules (husky lives in tests/)
-tests/node_modules/
-
-# Tests
+# Node (transient tooling only)
+node_modules/
 playwright-report/
 test-results/
-*.zip
+
+# OS / editor
+.DS_Store
+*.iml
+/.idea

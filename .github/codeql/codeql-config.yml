@@ -1,0 +1,6 @@
+name: "Smart Shopping Calculator CodeQL Config"
+
+# Exclude build output and vendored files from CodeQL analysis.
+paths-ignore:
+  - 'target/**'
+  - '**/node_modules/**'

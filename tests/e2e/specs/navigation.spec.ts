@@ -7,8 +7,9 @@ test.describe('Navigation & Dark Mode', () => {
     const app = new CalcPage(page);
     await app.goto();
 
-    await expect(page.locator('#page-tp')).toHaveClass(/visible/);
-    await expect(page.locator('#page-pro')).not.toHaveClass(/visible/);
+    // dioxus renders only the active page — TP page is identifiable by its method tabs
+    await expect(page.locator('.method-tabs')).toBeVisible();
+    await expect(page.locator('input[placeholder="e.g. 29.99"]')).toHaveCount(0);
     await expect(page.locator('button.nav-tab.active')).toContainText('toilet paper');
   });
 
@@ -17,8 +18,8 @@ test.describe('Navigation & Dark Mode', () => {
     await app.goto();
     await app.switchToProtein();
 
-    await expect(page.locator('#page-pro')).toHaveClass(/visible/);
-    await expect(page.locator('#page-tp')).not.toHaveClass(/visible/);
+    await expect(page.locator('input[placeholder="e.g. 29.99"]')).toHaveCount(2);
+    await expect(page.locator('.method-tabs')).toHaveCount(0);
     await expect(page.locator('button.nav-tab.active')).toContainText('protein powder');
   });
 
@@ -28,19 +29,16 @@ test.describe('Navigation & Dark Mode', () => {
     await app.switchToProtein();
     await app.switchToToiletPaper();
 
-    await expect(page.locator('#page-tp')).toHaveClass(/visible/);
+    await expect(page.locator('.method-tabs')).toBeVisible();
     await expect(page.locator('button.nav-tab.active')).toContainText('toilet paper');
   });
 
-  test('dark mode toggle adds dark class to body', async ({ page }) => {
+  test('dark mode toggle adds dark class to app', async ({ page }) => {
     const app = new CalcPage(page);
     await app.goto();
 
     // Start from known light state
-    await page.evaluate(() => {
-      document.body.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    });
+    await app.resetLight();
 
     await app.darkBtn.click();
     expect(await app.isDark()).toBe(true);
@@ -51,10 +49,7 @@ test.describe('Navigation & Dark Mode', () => {
     const app = new CalcPage(page);
     await app.goto();
 
-    await page.evaluate(() => {
-      document.body.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    });
+    await app.resetLight();
 
     await app.darkBtn.click(); // → dark
     await app.darkBtn.click(); // → light
@@ -65,14 +60,11 @@ test.describe('Navigation & Dark Mode', () => {
   test('dark mode preference is saved to localStorage', async ({ page }) => {
     const app = new CalcPage(page);
     await app.goto();
-    await page.evaluate(() => {
-      document.body.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    });
+    await app.resetLight();
     await app.darkBtn.click();
 
     const saved = await page.evaluate(() => localStorage.getItem('theme'));
-    expect(saved).toBe('dark');
+    expect(JSON.parse(saved!)).toBe('dark');
   });
 
   test('page title is correct', async ({ page }) => {
@@ -85,5 +77,20 @@ test.describe('Navigation & Dark Mode', () => {
     const app = new CalcPage(page);
     await app.goto();
     await expect(page.locator('footer')).toContainText('no data is sent anywhere');
+  });
+
+  // ── Localisation (added for the Rust build) ────────────────────────────
+  test('language toggle switches the UI to French', async ({ page }) => {
+    const app = new CalcPage(page);
+    await app.goto();
+    await page.locator('.header-controls .pill-btn').nth(0).click();
+    await expect(page.locator('.nav-tab').first()).toContainText('papier toilette');
+  });
+
+  test('currency select switches the unit label', async ({ page }) => {
+    const app = new CalcPage(page);
+    await app.goto();
+    await page.locator('.currency-select').selectOption('$');
+    await expect(page.locator('.rank-val').first()).toContainText('$');
   });
 });
