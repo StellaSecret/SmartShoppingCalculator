@@ -1,4 +1,4 @@
-use crate::models::Lang;
+use smart_shopping_calculator_core::models::Lang;
 
 pub struct Strings {
     pub subtitle: &'static str,

@@ -150,3 +150,90 @@ pub fn pro_calc_powder(p: &Powder) -> ProCalc {
         _ => ProCalc::default(),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn assert_close(a: f64, b: f64) {
+        assert!((a - b).abs() < 1e-9, "expected {a}, got {b}");
+    }
+
+    #[test]
+    fn pf_parses_and_defaults() {
+        assert_close(pf("12.5"), 12.5);
+        assert_close(pf(" 3.0 "), 3.0);
+        assert_close(pf(""), 0.0);
+        assert_close(pf("abc"), 0.0);
+    }
+
+    #[test]
+    fn tp_weight_method_default_roll_a() {
+        let r = TpRoll::new_default(0, 0);
+        let c = tp_calc_roll(&r, TpMethod::Weight, HandCal::default(), "€", false);
+        assert!(c.valid);
+        assert_close(c.unit.unwrap(), 1.50 / (120.0 - 15.0));
+        assert_close(c.price_per_roll, 1.50);
+        assert_eq!(c.unit_label, "€/g paper");
+    }
+
+    #[test]
+    fn tp_sheets_method() {
+        let r = TpRoll::new_default(1, 1);
+        let c = tp_calc_roll(&r, TpMethod::Sheets, HandCal::default(), "€", false);
+        assert!(c.valid);
+        let area = 280.0 * 100.0 * 100.0 / 1000.0;
+        assert_close(c.unit.unwrap(), (2.20 / area) * 100.0);
+    }
+
+    #[test]
+    fn tp_diameter_method() {
+        let r = TpRoll::new_default(0, 0);
+        let c = tp_calc_roll(&r, TpMethod::Diameter, HandCal::default(), "€", false);
+        assert!(c.valid);
+        let vol = std::f64::consts::PI * ((110.0f64 / 2.0).powi(2) - (40.0f64 / 2.0).powi(2)) * 100.0 / 1000.0;
+        assert_close(c.unit.unwrap(), 1.50 / vol);
+    }
+
+    #[test]
+    fn tp_hand_method_uses_calibration() {
+        let r = TpRoll::new_default(0, 0);
+        let c = tp_calc_roll(&r, TpMethod::Hand, HandCal::default(), "€", false);
+        assert!(c.valid);
+        let outer_est = 6.0 * 18.0;
+        let vol = std::f64::consts::PI * ((outer_est / 2.0f64).powi(2) - (40.0f64 / 2.0).powi(2)) * 85.0 / 1000.0;
+        assert_close(c.unit.unwrap(), 1.50 / vol);
+    }
+
+    #[test]
+    fn tp_invalid_when_fields_empty() {
+        let mut r = TpRoll::new_default(0, 0);
+        r.price = String::new();
+        let c = tp_calc_roll(&r, TpMethod::Weight, HandCal::default(), "€", false);
+        assert!(!c.valid);
+        assert!(c.unit.is_none());
+    }
+
+    #[test]
+    fn pro_default_brand_a() {
+        let p = Powder::new_default(0, 0);
+        let c = pro_calc_powder(&p);
+        assert!(c.valid);
+        assert_close(c.total_protein, 33.0 * 25.0);
+        assert_close(c.cpg, 29.99 / (33.0 * 25.0));
+    }
+
+    #[test]
+    fn pro_invalid_when_fields_empty() {
+        let mut p = Powder::new_default(0, 0);
+        p.price = String::new();
+        assert!(!pro_calc_powder(&p).valid);
+    }
+
+    #[test]
+    fn tp_fmt_adaptive_precision() {
+        assert_eq!(tp_fmt(0.005), "0.00500");
+        assert_eq!(tp_fmt(0.0143), "0.0143");
+        assert_eq!(tp_fmt(0.123), "0.123");
+    }
+}

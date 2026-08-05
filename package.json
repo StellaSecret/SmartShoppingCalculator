@@ -1,0 +1,15 @@
+{
+  "name": "smart-shopping-calculator-web",
+  "version": "1.0.0",
+  "description": "Smart Shopping Calculator — Web tests",
+  "scripts": {
+    "test": "playwright test",
+    "test:report": "playwright show-report",
+    "build": "echo 'Static site - no build needed'",
+    "preview": "serve target/dx/smart-shopping-calculator/release/web/public -p 4173"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "serve": "^14.2.6"
+  }
+}

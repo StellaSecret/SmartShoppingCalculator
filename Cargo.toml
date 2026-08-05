@@ -5,12 +5,18 @@ edition = "2021"
 description = "Compare products by real unit cost — toilet paper by €/g of paper, protein powder by €/g of protein. Rust + Dioxus port."
 
 [dependencies]
-dioxus = { version = "0.6", features = ["web"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+dioxus = { version = "0.7", features = ["web", "asset"] }
+smart-shopping-calculator-core = { path = "core" }
 gloo-storage = "0.3"
 web-sys = { version = "0.3", features = ["Window", "MediaQueryList"] }
 
+[workspace]
+members = ["core"]
+
 [profile.release]
-opt-level = "z"
 lto = true
+codegen-units = 1
+strip = "symbols"
+panic = "abort"
+opt-level = "z"
+debug = true

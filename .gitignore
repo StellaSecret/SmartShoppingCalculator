@@ -3,6 +3,8 @@
 
 # Node (transient tooling only)
 node_modules/
+playwright-report/
+test-results/
 
 # OS / editor
 .DS_Store

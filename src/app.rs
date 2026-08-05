@@ -1,10 +1,16 @@
 use dioxus::prelude::*;
 
-use crate::calc::{pf, pro_calc_powder, tp_calc_roll, tp_fmt, HandCal, ProCalc, TpCalc};
+use smart_shopping_calculator_core::calc::{pf, pro_calc_powder, tp_calc_roll, tp_fmt, HandCal, ProCalc, TpCalc};
+use smart_shopping_calculator_core::models::{Lang, Powder, ProSession, TpMethod, TpRoll, TpSession, COLORS};
 use crate::css::CSS;
 use crate::i18n::{card_price_label, choosing_saves, count_powders, count_rolls, lifetime_line, s};
-use crate::models::{Lang, Page, Powder, ProSession, TpMethod, TpRoll, TpSession, COLORS};
 use crate::storage;
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Page {
+    Tp,
+    Pro,
+}
 
 #[derive(Clone, Copy)]
 pub struct AppState {

@@ -1,19 +1,22 @@
 [application]
-name = "smart-shopping-calculator"
-default_platform = "web"
+name = "Smart Shopping Calculator"
 
-[web.app]
+[web]
 title = "Smart Shopping Calculator"
-base_path = "/SmartShoppingCalculator/"
+base_path = "/SmartShoppingCalculator"
+pre_compress = true
+wasm_opt = ["z"]
 
 [web.watcher]
 reload_html = true
-watch_path = ["src", "assets"]
 
-[web.resource]
-style = []
-script = []
+[web.watcher.dev]
+ignore = []
 
-[web.resource.dev]
-style = []
-script = []
+[bundle]
+identifier = "com.stellasecret.smartshoppingcalculator"
+version = "0.1.0"
+
+[android]
+min_sdk = 24
+target_sdk = 36

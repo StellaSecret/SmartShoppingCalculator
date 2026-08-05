@@ -1,11 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Page {
-    Tp,
-    Pro,
-}
-
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum TpMethod {
     Weight,
