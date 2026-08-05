@@ -1,0 +1,19 @@
+[application]
+name = "smart-shopping-calculator"
+default_platform = "web"
+
+[web.app]
+title = "Smart Shopping Calculator"
+base_path = "/SmartShoppingCalculator/"
+
+[web.watcher]
+reload_html = true
+watch_path = ["src", "assets"]
+
+[web.resource]
+style = []
+script = []
+
+[web.resource.dev]
+style = []
+script = []

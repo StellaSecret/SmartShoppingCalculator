@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<network-security-config>
-    <!-- Allow HTTPS to Open Food Facts for barcode lookup -->
-    <domain-config cleartextTrafficPermitted="false">
-        <domain includeSubdomains="true">world.openfoodfacts.org</domain>
-    </domain-config>
-    <!-- Block all other cleartext traffic -->
-    <base-config cleartextTrafficPermitted="false" />
-</network-security-config>
