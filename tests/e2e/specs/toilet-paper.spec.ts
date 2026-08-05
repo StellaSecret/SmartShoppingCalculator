@@ -12,7 +12,7 @@ test.describe('Toilet Paper — By Weight', () => {
   test('counter label shows "2 / 4 rolls"', async ({ page }) => {
     const app = new CalcPage(page);
     await app.goto();
-    await expect(page.locator('#tp-count-label')).toHaveText('2 / 4 rolls');
+    await expect(page.locator('.top-controls label')).toHaveText('2 / 4 rolls');
   });
 
   test('default rolls produce a valid cost-per-gram result', async ({ page }) => {
@@ -89,7 +89,7 @@ test.describe('Toilet Paper — By Weight', () => {
     await app.addRoll();
 
     await expect(app.tpCards()).toHaveCount(3);
-    await expect(page.locator('#tp-count-label')).toHaveText('3 / 4 rolls');
+    await expect(page.locator('.top-controls label')).toHaveText('3 / 4 rolls');
   });
 
   test('add button is disabled at 4 rolls', async ({ page }) => {
@@ -98,8 +98,8 @@ test.describe('Toilet Paper — By Weight', () => {
     await app.addRoll();
     await app.addRoll(); // now 4
 
-    const btn = page.locator('#tp-add-btn');
-    await expect(btn).toHaveCSS('pointer-events', 'none');
+    const btn = page.locator('.top-controls .add-btn');
+    await expect(btn).toHaveClass(/disabled/);
   });
 
   test('removing a roll decreases count', async ({ page }) => {
@@ -118,7 +118,6 @@ test.describe('Toilet Paper — By Weight', () => {
     // Clear price of first roll
     const priceInput = app.tpCards().first().locator('input[placeholder*="1.99"]');
     await priceInput.fill('');
-    await priceInput.dispatchEvent('input');
 
     await expect(app.tpCards().first().locator('.card-result')).toContainText('fill in all fields');
   });
@@ -129,7 +128,6 @@ test.describe('Toilet Paper — By Weight', () => {
 
     const priceInput = app.tpCards().first().locator('input[placeholder*="1.99"]');
     await priceInput.fill('');
-    await priceInput.dispatchEvent('input');
 
     await expect(app.tpResults()).toContainText('add at least two valid rolls');
   });
@@ -143,8 +141,8 @@ test.describe('Toilet Paper — By Sheet Count', () => {
     await app.goto();
     await app.setTpMethod('sheets');
 
-    await expect(page.locator('#tpsec-sheets-0')).toHaveClass(/visible/);
-    await expect(page.locator('#tpsec-weight-0')).not.toHaveClass(/visible/);
+    await expect(page.locator('input[placeholder="e.g. 200"]').first()).toBeVisible();
+    await expect(page.locator('input[placeholder="e.g. 120"]')).toHaveCount(0);
   });
 
   test('cost per 100cm² is computed correctly', async ({ page }) => {
@@ -154,7 +152,7 @@ test.describe('Toilet Paper — By Sheet Count', () => {
     await page.waitForTimeout(50);
 
     // Roll A defaults: 1.50€, 200 sheets, 113mm × 100mm
-    // area = 200 * 113 * 100 / 10000 = 2260 cm²
+    // area = 200 * 113 * 100 / 1000 = 2260 cm²
     // cost/100cm² = (1.50 / 2260) * 100 = 0.06637
     const result = await app.getRollResult(0);
     const val = parseFloat(result);
@@ -178,8 +176,8 @@ test.describe('Toilet Paper — By Diameter', () => {
     await app.goto();
     await app.setTpMethod('diameter');
 
-    await expect(page.locator('#tpsec-diameter-0')).toHaveClass(/visible/);
-    await expect(page.locator('#tpsec-weight-0')).not.toHaveClass(/visible/);
+    await expect(page.locator('input[placeholder="e.g. 110"]').first()).toBeVisible();
+    await expect(page.locator('input[placeholder="e.g. 120"]')).toHaveCount(0);
   });
 
   test('volume is computed from outer/inner/width cylinders', async ({ page }) => {
@@ -189,7 +187,7 @@ test.describe('Toilet Paper — By Diameter', () => {
     await page.waitForTimeout(50);
 
     // Roll A defaults: outer=110, inner=40, width=100
-    // vol = π * ((55)²-(20)²) * 100 / 1000 = π * (3025-400) * 0.1 = π * 262.5 ≈ 824.67 cm³
+    // vol = π * ((55)²-(20)²) * 100 / 1000 = π * 262.5 ≈ 824.67 cm³
     // cpg = 1.50 / 824.67 ≈ 0.001819
     const result = await app.getRollResult(0);
     const val = parseFloat(result);
@@ -213,7 +211,7 @@ test.describe('Toilet Paper — By Hand', () => {
     await app.goto();
     await app.setTpMethod('hand');
 
-    await expect(page.locator('#hand-calibration')).toBeVisible();
+    await expect(page.locator('.hand-panel')).toBeVisible();
   });
 
   test('hand calibration panel hides when switching away', async ({ page }) => {
@@ -222,7 +220,7 @@ test.describe('Toilet Paper — By Hand', () => {
     await app.setTpMethod('hand');
     await app.setTpMethod('weight');
 
-    await expect(page.locator('#hand-calibration')).toBeHidden();
+    await expect(page.locator('.hand-panel')).toHaveCount(0);
   });
 
   test('hand fields are visible when method is "hand"', async ({ page }) => {
@@ -230,7 +228,7 @@ test.describe('Toilet Paper — By Hand', () => {
     await app.goto();
     await app.setTpMethod('hand');
 
-    await expect(page.locator('#tpsec-hand-0')).toHaveClass(/visible/);
+    await expect(page.locator('input[placeholder="e.g. 6"]').first()).toBeVisible();
   });
 
   test('unit label shows €/cm³ est.', async ({ page }) => {
@@ -249,9 +247,8 @@ test.describe('Toilet Paper — By Hand', () => {
 
     const before = await app.getRollResult(0);
 
-    const fingerInput = page.locator('#hand-finger');
+    const fingerInput = page.locator('.hand-panel .field input').nth(0);
     await fingerInput.fill('22');
-    await fingerInput.dispatchEvent('input');
     await page.waitForTimeout(50);
 
     const after = await app.getRollResult(0);

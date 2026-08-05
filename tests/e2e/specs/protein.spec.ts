@@ -16,7 +16,7 @@ test.describe('Protein Powder', () => {
   });
 
   test('counter label shows "2 / 4 powders"', async ({ page }) => {
-    await expect(page.locator('#pro-count-label')).toHaveText('2 / 4 powders');
+    await expect(page.locator('.top-controls label')).toHaveText('2 / 4 powders');
   });
 
   test('default powders produce a valid €/g result', async ({ page }) => {
@@ -117,7 +117,7 @@ test.describe('Protein Powder', () => {
     const app = new CalcPage(page);
     await app.addPowder();
     await expect(app.proCards()).toHaveCount(3);
-    await expect(page.locator('#pro-count-label')).toHaveText('3 / 4 powders');
+    await expect(page.locator('.top-controls label')).toHaveText('3 / 4 powders');
   });
 
   test('add button is disabled at 4 powders', async ({ page }) => {
@@ -125,8 +125,8 @@ test.describe('Protein Powder', () => {
     await app.addPowder();
     await app.addPowder(); // 4
 
-    const btn = page.locator('#pro-add-btn');
-    await expect(btn).toHaveCSS('pointer-events', 'none');
+    const btn = page.locator('.top-controls .add-btn');
+    await expect(btn).toHaveClass(/disabled/);
   });
 
   test('removing a powder reduces count', async ({ page }) => {
@@ -141,7 +141,6 @@ test.describe('Protein Powder', () => {
     const app = new CalcPage(page);
     const priceInput = app.proCards().first().locator('input[placeholder*="29.99"]');
     await priceInput.fill('');
-    await priceInput.dispatchEvent('input');
 
     await expect(app.proSummary()).toContainText('add at least two valid powders');
   });
@@ -152,7 +151,6 @@ test.describe('Protein Powder', () => {
     const card = app.proCards().first();
     const proteinInput = card.locator('input[placeholder*="25"]');
     await proteinInput.fill('0');
-    await proteinInput.dispatchEvent('input');
 
     await expect(card.locator('.card-result')).toContainText('fill in all fields');
   });
@@ -162,7 +160,6 @@ test.describe('Protein Powder', () => {
     const card = app.proCards().first();
     const servingsInput = card.locator('input[placeholder*="33"]');
     await servingsInput.fill('0');
-    await servingsInput.dispatchEvent('input');
 
     await expect(card.locator('.card-result')).toContainText('fill in all fields');
   });

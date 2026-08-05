@@ -1,1 +1,0 @@
-# The gradle-wrapper.jar will be downloaded automatically by Android Studio.
