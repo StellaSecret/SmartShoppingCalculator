@@ -11,7 +11,6 @@ test.describe('Edge Cases & Boundary Conditions', () => {
     const card = app.proCards().first();
     const priceInput = card.locator('input[placeholder*="29.99"]');
     await priceInput.fill('-5');
-    await priceInput.dispatchEvent('input');
 
     // Negative price yields cpg <= 0 → treated as invalid
     await expect(card.locator('.card-result')).toContainText('fill in all fields');
@@ -96,7 +95,6 @@ test.describe('Edge Cases & Boundary Conditions', () => {
 
     const nameInput = app.proCards().first().locator('input[placeholder="Name"]');
     await nameInput.fill('MyProtein');
-    await nameInput.dispatchEvent('input');
     await page.waitForTimeout(50);
 
     await expect(app.proSummary()).toContainText('MyProtein');
@@ -108,7 +106,6 @@ test.describe('Edge Cases & Boundary Conditions', () => {
 
     const nameInput = app.tpCards().first().locator('input[placeholder="Name"]');
     await nameInput.fill('SuperRoll');
-    await nameInput.dispatchEvent('input');
     await page.waitForTimeout(50);
 
     await expect(app.tpResults()).toContainText('SuperRoll');
@@ -130,11 +127,11 @@ test.describe('Mobile Viewport', () => {
   });
 
   test('cards grid renders in 2 columns on narrow viewport', async ({ page }) => {
-    // Pixel 7 is ~393px wide — CSS sets 1fr 1fr at ≤520px
+    // Pixel 7 is ~412px wide — CSS keeps 1fr 1fr at ≤520px
     const app = new CalcPage(page);
     await app.goto();
 
-    const grid = page.locator('#tp-grid');
+    const grid = page.locator('.cards-grid');
     const gridStyle = await grid.evaluate(el => getComputedStyle(el).gridTemplateColumns);
     // Should have two columns (two measurements in the string)
     expect(gridStyle.split(' ').length).toBe(2);
