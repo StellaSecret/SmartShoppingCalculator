@@ -13,32 +13,30 @@ export class CalcPage {
 
   // ── Navigation ───────────────────────────────────────────────────────────
   async goto() {
-    // Firefox juggler can abort the first page.goto with
-    // "interrupted by another navigation to the SAME url" (replayed
-    // navigationCommitted after a process swap, see microsoft/playwright
-    // #41216 / #41224). The superseding navigation lands on APP_PATH, so on
-    // that error we just wait for the app instead of re-navigating — a reload
-    // deterministically re-triggers the same race.
-    for (let attempt = 0; ; attempt++) {
+    // Note: the old port 4190 is on Firefox's banned-port list (ManageSieve),
+    // so Firefox cancelled every navigation before connecting. Now 4200.
+    // Keep waitUntil 'commit' + card wait: the wasm load can process-swap and
+    // supersede the navigation; on "interrupted by another navigation" we
+    // DON'T re-navigate (that re-triggers the race) — the superseding
+    // navigation lands on the same APP_PATH url, so we wait for the app.
+    const ctx = this.page.context() as { _options?: { baseURL?: string } };
+    const base = ctx._options?.baseURL ?? 'http://localhost:4200';
+    const url = new URL(APP_PATH, base).toString();
+    for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        await this.page.goto(APP_PATH);
+        await this.page.goto(url, { waitUntil: 'commit', timeout: 10_000 });
         break;
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         if (!/interrupted by another (navigation|one)/i.test(msg)) throw err;
-        try {
-          await this.page.waitForURL(APP_PATH, { timeout: 10_000 });
-          await this.page.waitForLoadState('load');
-          break;
-        } catch {
-          // The interrupted goto left the page at about:blank — retry.
-          if (attempt > 1) throw err;
-          await new Promise((resolve) => setTimeout(resolve, 250));
-        }
       }
     }
-    // Wait until the default TP grid has rendered its cards.
-    await this.page.waitForSelector('.cards-grid .item-card');
+    try {
+      await this.page.waitForSelector('.cards-grid .item-card', { timeout: 10_000 });
+    } catch {
+      // Surface a real timeout with the page state for CI diagnosis.
+      throw new Error(`App did not render after navigation. page.url()=${this.page.url()}`);
+    }
   }
 
   async switchToToiletPaper() {
