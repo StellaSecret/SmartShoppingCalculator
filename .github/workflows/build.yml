@@ -68,7 +68,7 @@ jobs:
         run: dx build --release --base-path /SmartShoppingCalculator/
 
       - name: Upload web bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wasm-public
           path: target/dx/smart-shopping-calculator/release/web/public/
