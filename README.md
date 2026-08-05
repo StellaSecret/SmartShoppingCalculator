@@ -1,166 +1,86 @@
-# 🛒 Smart Shopping Calculator
+# Smart Shopping Calculator — Rust + Dioxus port
 
-Compare everyday products by their **real unit cost** — toilet paper by €/g of paper, protein powder by €/g of protein. No ads, no account, runs entirely offline.
+A rewrite of the original Android/WebView app (HTML/CSS/JS in
+`app/src/main/assets/index.html`) as a Rust web app using
+[Dioxus](https://dioxuslabs.com/) 0.6.
 
-→ **[Try it on the web](https://falltrades.github.io/SmartShoppingCalculator/)** · [Privacy Policy](https://falltrades.github.io/SmartShoppingCalculator/privacy.html)
+It keeps the same core idea: compare products by the unit that
+actually matters instead of sticker price — toilet paper by cost per
+gram of paper (or per 100cm² of sheet area, per cm³ of roll volume, or
+a "measure with your hand" estimate), and protein powder by cost per
+gram of protein.
 
----
+## What's included
 
-## Project structure
+- Both calculators (toilet paper + protein powder), up to 4 items each
+- All four toilet-paper comparison methods: by weight, by sheet count,
+  by diameter, and the hand-estimation method
+- Live ranking list with a "best value" tag, cost bars, and a
+  "choosing X saves you Y%" callout
+- Lifetime cost projection (rolls/servings per week → cost per year)
+- Session save/restore/clear via browser `localStorage`
+- Dark mode (persisted, and defaults to the OS `prefers-color-scheme`)
+- English/French UI toggle (persisted)
+- Currency selector (persisted)
+
+## What's not included
+
+- **Barcode scanning.** The original Android app used a native
+  `AndroidBridge` JS bridge to talk to a system camera/barcode scanner;
+  there's no browser equivalent, so this was left out rather than
+  faked.
+- The Android `WebView` wrapper itself (splash screen, native manifest,
+  etc.) — this port is a standalone web app.
+
+## Project layout
 
 ```
-├── index.html          ← Shell HTML + CSS (web & Android)
-├── darkmode.js         ← Dark mode toggle + localStorage
-├── nav.js              ← Tab navigation, page switching
-├── tp.js               ← Toilet paper logic (4 methods: weight/sheets/diameter/hand)
-├── protein.js          ← Protein powder logic (cost per gram, ranking)
-├── init.js             ← Bootstrap: add default rolls/powders
-│
-├── app/
-│   └── src/main/
-│       ├── assets/     ← Exact copy of root web files (served by Android WebView)
-│       ├── java/com/stellasecret/smartshoppingcalculator/
-│       │   ├── MainActivity.kt    ← WebView host, lifecycle, dark mode injection
-│       │   └── AndroidBridge.kt  ← JS ↔ Kotlin bridge (Toast, dark mode, version)
-│       └── res/                   ← Icons, layouts, themes
-│
-├── tests/
-│   ├── e2e/            ← Playwright end-to-end tests (65 tests, 3 browsers)
-│   ├── unit/           ← JUnit5 + Mockk Kotlin unit tests (71 tests)
-│   └── .husky/pre-commit ← Pre-commit checks (secrets, keys, sync, YAML)
-│
-└── .github/workflows/build.yml  ← CI/CD pipeline
+src/
+  main.rs     entry point (dioxus::launch)
+  app.rs      root component, pages, cards, results/ranking rendering
+  models.rs   TpRoll / Powder / Lang / Page / TpMethod + session structs
+  calc.rs     all the unit-cost math (ported from tp.js / protein.js)
+  i18n.rs     English + French UI strings
+  storage.rs  localStorage helpers (theme, language, currency, sessions)
+  css.rs      the app's stylesheet (same look as the original, adapted
+              to CSS variables toggled by a `.dark` class)
 ```
 
-> **Rule:** `index.html` and the 5 JS files must always be **identical** between the repo root and `app/src/main/assets/`. The pre-commit hook enforces this.
+## Running it
 
----
-
-## Running locally
-
-### Web (no setup needed)
-Open `index.html` directly in a browser — everything is local, no server required.
-
-### Android
-1. Open the repo root in **Android Studio Hedgehog (2023.1+)**
-2. Let Gradle sync finish
-3. `Run` (debug build, no signing needed)
-
-### Command line
-```bash
-# Debug APK
-./gradlew assembleDebug
-
-# Release APK + AAB (signing injected by CI — see below)
-./gradlew assembleRelease bundleRelease
-```
-
----
-
-## Tests
-
-### Playwright — E2E (`tests/e2e/`)
-
-Covers all business logic in the JS modules: 4 toilet paper methods, protein powder, ranking, edge cases, mobile viewport (Pixel 7).
+This targets the browser (WebAssembly), via Dioxus's `web` renderer.
+You'll need a reasonably recent Rust toolchain — newer than what's in
+Ubuntu's default `apt` packages (this pulls in `wasm-bindgen`/`web-sys`
+versions that need rustc 1.77+). Easiest path:
 
 ```bash
-cd tests/e2e
-npm ci
-npx playwright install --with-deps chromium firefox
-npx playwright test           # headless
-npx playwright test --headed  # visible browser
-npx playwright test --ui      # interactive mode
-npx playwright show-report    # HTML report
+# 1. Install/refresh Rust (https://rustup.rs)
+rustup update stable
+rustup target add wasm32-unknown-unknown
+
+# 2. Install the Dioxus CLI
+cargo install dioxus-cli
+
+# 3. From this directory:
+dx serve
 ```
 
-| Suite | File | Tests |
-|-------|------|-------|
-| Navigation & Dark Mode | `navigation.spec.ts` | 8 |
-| Toilet Paper (4 methods) | `toilet-paper.spec.ts` | 22 |
-| Protein Powder | `protein.spec.ts` | 18 |
-| Edge Cases & Mobile | `edge-cases.spec.ts` | 11 |
+Then open the URL it prints (typically http://localhost:8080).
 
-### Kotlin unit tests (`tests/unit/`)
-
-Covers `AndroidBridge`, all calculation formulae, ranking, and `MainActivity` lifecycle.
+For a static production build:
 
 ```bash
-./gradlew :tests:unit:test --no-daemon
-# Report: tests/unit/build/reports/tests/test/index.html
+dx build --release
 ```
 
-| File | What it tests |
-|------|---------------|
-| `AndroidBridgeTest.kt` | Toast, system dark mode, app version |
-| `CalcLogicTest.kt` | Weight/sheets/diameter/protein formulae, ranking, savings |
-| `MainActivityTest.kt` | WebView lifecycle, JS injection, swipe refresh, back nav |
+The bundled output lands in `target/dx/smart-shopping-calculator/release/web/public/` — deploy that folder anywhere that serves static files.
 
----
-
-## CI/CD pipeline
-
-```
-push to main
-  ├── test-kotlin    (JUnit5 — 71 tests)
-  ├── test-playwright (Playwright — 65 tests × 3 browsers)
-  │
-  └── [both pass] → build
-                      ├── assembleRelease + bundleRelease (signed via -P flags)
-                      ├── deploy-pages (GitHub Pages)
-                      └── release (GitHub Release with APK + AAB)
-```
-
-PRs get a debug APK only — no signing, no release.
-
-### Required GitHub secrets
-
-| Secret | How to get it |
-|--------|---------------|
-| `KEYSTORE_BASE64` | `base64 -w0 your-release.jks` |
-| `KEYSTORE_PASSWORD` | Store password set when creating the keystore |
-| `KEY_ALIAS` | Run `keytool -list -keystore your-release.jks` — first word before the comma |
-| `KEY_PASSWORD` | Key password (often same as store password) |
-
----
-
-## Adding a new product category
-
-1. Create `yourcategory.js` in the repo root (follow the pattern in `tp.js` or `protein.js`)
-2. Copy it to `app/src/main/assets/yourcategory.js`
-3. Add `<script src="yourcategory.js"></script>` to `index.html` (and copy to assets)
-4. Add a tab button in `index.html` calling `showPage('yourcategory', this)`
-5. Write Playwright specs in `tests/e2e/specs/yourcategory.spec.ts`
-
----
-
-## JavaScript ↔ Android bridge
-
-The app exposes `window.AndroidBridge` in the WebView:
-
-```javascript
-AndroidBridge.showToast("Saved!");          // native Toast
-AndroidBridge.isSystemDarkMode();           // boolean — system dark theme?
-AndroidBridge.getAppVersion();              // "1.0.42"
-```
-
----
-
-## Pre-commit hooks
-
-Install once per machine:
-```bash
-cd tests && npm install
-```
-
-Checks on every commit (< 3 seconds):
-
-| Check | Why |
-|-------|-----|
-| No secret patterns | Secrets in git history are permanent |
-| No `.jks`/`.keystore` files | Signing keys must never be committed |
-| `gradle-wrapper.jar` not deleted | Required by CI |
-| No `console.log` in HTML | Debug noise in production |
-| No files > 1MB | Catches accidental APK/zip commits |
-| YAML/JSON syntax | Broken workflow = wasted CI runner |
-| Web files in sync | root == assets, always |
-| AndroidBridge drift | Test copy must match production signatures |
+> **Note on verification:** the project compiles and links cleanly for
+> `wasm32-unknown-unknown` (verified with `cargo check` and both dev and
+> release `cargo build`, rustc 1.97). The math is a close, function-by-
+> function port of the original JS (verified against `tpCalc()`,
+> `proCalc()`, and the `STRINGS` tables). Note that the Dioxus `rsx!`
+> macro doesn't support `let` statements inside `for` loops, so ranking
+> rows are precomputed into `TpRank`/`ProRank` structs before rendering.
+> Requires the `wasm32-unknown-unknown` target installed for the
+> toolchain you build with.

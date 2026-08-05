@@ -1,3 +1,0 @@
-# Preserve executable bit on hook scripts
-tests/e2e/.husky/pre-commit text eol=lf
-tests/e2e/.husky/_/h        text eol=lf
