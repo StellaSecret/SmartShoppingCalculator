@@ -1,0 +1,33 @@
+[package]
+name = "smart-shopping-calculator"
+version = "0.1.0"
+edition = "2021"
+description = "Compare products by real unit cost — toilet paper by €/g of paper, protein powder by €/g of protein. Rust + Dioxus port."
+
+[dependencies]
+dioxus = { version = "=0.7.9", features = ["asset"] }
+smart-shopping-calculator-core = { path = "core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+gloo-storage = "0.4"
+web-sys = { version = "0.3", features = ["Window", "MediaQueryList"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+dioxus-desktop = "=0.7.9"
+
+[features]
+web = ["dioxus/web"]
+mobile = ["dioxus/mobile"]
+
+[workspace]
+members = ["core"]
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = "symbols"
+panic = "abort"
+opt-level = "z"
+debug = true

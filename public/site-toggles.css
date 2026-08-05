@@ -1,0 +1,52 @@
+/* Shared theme/lang toggles for static pages (landing, demo).
+   Dark palette mirrors the SPA (src/css.rs .app.dark). */
+
+html.dark {
+  --bg: #18181a;
+  --surface: #222224;
+  --border: #333336;
+  --text: #f0f0ed;
+  --muted: #888884;
+  --win: #5aaa3a;
+  --win-bg: #1a2e12;
+  --tag-more-bg: #2a2a2c;
+  --danger: #e5a3a0;
+}
+
+html.dark body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body, .nav, .item-card, .results-panel, .field-val, .btn-try {
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+/* buttons (mirror .pill-btn in src/css.rs) */
+.pill-btn {
+  padding: 6px 12px;
+  font-family: var(--mono, "DM Mono", monospace);
+  font-size: 0.78rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.pill-btn:hover { color: var(--text); border-color: var(--text); }
+
+/* landing: fixed corner */
+.corner-toggles {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  gap: 6px;
+  z-index: 1000;
+}
+
+/* demo: dark tweaks */
+html.dark .nav { background: rgba(24, 24, 26, 0.9); }
+html.dark .annotation { background: rgba(245, 166, 35, 0.08); border-color: rgba(245, 166, 35, 0.35); }

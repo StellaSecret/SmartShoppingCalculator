@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="title">Smart Shopping Calculator</title>
+  <link rel="stylesheet" href="./site-toggles.css">
+  <style>
+    :root { --bg: #f0f0ed; --text: #1a1a1a; --muted: #6a6a6a; --surface: #ffffff; --border: #e2e2de; --win: #1a7a3a; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "DM Sans", system-ui, sans-serif;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 2rem;
+    }
+    main { max-width: 34rem; text-align: center; }
+    h1 {
+      font-family: "DM Mono", monospace;
+      font-size: 1.6rem;
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
+    }
+    p { color: var(--muted); line-height: 1.6; margin-bottom: 2rem; }
+    a.launch {
+      display: inline-block;
+      background: var(--win);
+      color: #fff;
+      text-decoration: none;
+      font-family: "DM Mono", monospace;
+      padding: 0.8rem 1.6rem;
+      border-radius: 8px;
+      font-weight: 500;
+    }
+    a.launch:hover { filter: brightness(1.1); }
+    .demo-link { font-size: 0.8rem; color: var(--muted); margin-top: 0.9rem; }
+    .demo-link a { color: var(--muted); text-decoration: underline; }
+    .demo-link a:hover { color: var(--text); }
+    .note { font-size: 0.75rem; color: var(--muted); margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 data-i18n="h1">🛒 smart shopping calculator</h1>
+    <p data-i18n="tagline">Compare toilet paper by cost per gram of paper and protein powder by cost per gram of protein — no data leaves your browser.</p>
+    <a class="launch" data-i18n="launch" href="./spa.html">open the calculator</a>
+    <div class="demo-link"><a data-i18n="demo" href="./demo.html">or see a live demo</a></div>
+    <div class="note" data-i18n="note">runs entirely in your browser</div>
+  </main>
+  <div class="corner-toggles">
+    <button id="btn-lang" class="pill-btn" type="button">FR</button>
+    <button id="btn-theme" class="pill-btn" type="button">🌙 dark</button>
+  </div>
+  <script src="./site-toggles.js"></script>
+  <script>
+    SSC.init({
+      title: { en: "Smart Shopping Calculator", fr: "Calculatrice de courses intelligente" },
+      h1: { en: "🛒 smart shopping calculator", fr: "🛒 calculatrice de courses intelligente" },
+      tagline: { en: "Compare toilet paper by cost per gram of paper and protein powder by cost per gram of protein — no data leaves your browser.", fr: "Comparez le papier toilette au coût par gramme de papier et la whey au coût par gramme de protéines — aucune donnée ne quitte votre navigateur." },
+      launch: { en: "open the calculator", fr: "ouvrir la calculatrice" },
+      demo: { en: "or see a live demo", fr: "ou voir une démo" },
+      note: { en: "runs entirely in your browser", fr: "fonctionne entièrement dans votre navigateur" }
+    });
+  </script>
+</body>
+</html>

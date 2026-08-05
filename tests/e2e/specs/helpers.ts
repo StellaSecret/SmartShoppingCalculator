@@ -1,47 +1,83 @@
-import { Page, Locator } from '@playwright/test';
+import { Page } from '@playwright/test';
+
+export const APP_PATH = '/SmartShoppingCalculator/';
 
 /**
- * Page Object for Smart Shopping Calculator.
- * Wraps all selectors so tests stay readable when the HTML changes.
+ * Page Object for Smart Shopping Calculator (dioxus build).
+ * Wraps all selectors so tests stay readable when the markup changes.
+ * The dioxus app renders only one page at a time (TP or protein), so
+ * global `.item-card` / `.cards-grid` locators are unambiguous.
  */
 export class CalcPage {
   constructor(readonly page: Page) {}
 
   // ── Navigation ───────────────────────────────────────────────────────────
   async goto() {
-    await this.page.goto('');    // baseURL is already set to index.html
-    // Wait until both grids have rendered their default cards.
-    // TP renders 2 cards on load; protein also renders 2 (but the grid
-    // may be hidden — waitForSelector checks DOM presence, not visibility).
-    await this.page.waitForSelector('#tp-grid .item-card');
-    await this.page.waitForSelector('#pro-grid .item-card', { state: 'attached' });
+    // Note: the old port 4190 is on Firefox's banned-port list (ManageSieve),
+    // so Firefox cancelled every navigation before connecting. Now 4200.
+    // Keep waitUntil 'commit' + card wait: the wasm load can process-swap and
+    // supersede the navigation; on "interrupted by another navigation" we
+    // DON'T re-navigate (that re-triggers the race) — the superseding
+    // navigation lands on the same APP_PATH url, so we wait for the app.
+    const ctx = this.page.context() as { _options?: { baseURL?: string } };
+    const base = ctx._options?.baseURL ?? 'http://localhost:4200';
+    const url = new URL(APP_PATH, base).toString();
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        await this.page.goto(url, { waitUntil: 'commit', timeout: 10_000 });
+        break;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (!/interrupted by another (navigation|one)/i.test(msg)) throw err;
+      }
+    }
+    try {
+      await this.page.waitForSelector('.cards-grid .item-card', { timeout: 10_000 });
+    } catch {
+      // Surface a real timeout with the page state for CI diagnosis.
+      throw new Error(`App did not render after navigation. page.url()=${this.page.url()}`);
+    }
   }
 
   async switchToToiletPaper() {
-    // Use id instead of text so emoji / locale changes don't break it
-    await this.page.click('.nav-tab[onclick*="\'tp\'"]');
-    await this.page.waitForSelector('#tp-grid .item-card');
+    await this.page.locator('.nav-tab').nth(0).click();
+    await this.page.waitForSelector('.cards-grid .item-card');
   }
 
   async switchToProtein() {
-    await this.page.click('.nav-tab[onclick*="\'pro\'"]');
-    await this.page.waitForSelector('#pro-grid .item-card');
+    await this.page.locator('.nav-tab').nth(1).click();
+    await this.page.waitForSelector('.cards-grid .item-card');
   }
 
   // ── Dark mode ────────────────────────────────────────────────────────────
-  get darkBtn()   { return this.page.locator('#dark-btn'); }
-  isDark()        { return this.page.evaluate(() => document.body.classList.contains('dark')); }
+  // The theme class lives on the app root div, not <body>.
+  get darkBtn() {
+    return this.page.locator('.header-controls .pill-btn').nth(1);
+  }
+  isDark() {
+    return this.page.evaluate(() => document.querySelector('.app')!.classList.contains('dark'));
+  }
+  /** Force a known light state and reload so the app re-initialises. */
+  async resetLight() {
+    await this.page.evaluate(() => {
+      document.querySelector('.app')!.classList.remove('dark');
+      localStorage.setItem('theme', JSON.stringify('light'));
+    });
+    try {
+      await this.page.reload();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (!/interrupted by another (navigation|one)/i.test(msg)) throw err;
+    }
+    await this.page.waitForSelector('.cards-grid .item-card');
+  }
 
   // ── Toilet Paper helpers ─────────────────────────────────────────────────
-  async addRoll()   { await this.page.click('#tp-add-btn'); }
+  async addRoll() { await this.page.locator('.top-controls .add-btn').click(); }
+
   async setTpMethod(method: 'weight' | 'sheets' | 'diameter' | 'hand') {
-    const ids: Record<string, string> = {
-      weight:   'tab-weight',
-      sheets:   'tab-sheets',
-      diameter: 'tab-diameter',
-      hand:     'tab-hand',
-    };
-    await this.page.click(`#${ids[method]}`);
+    const idx: Record<string, number> = { weight: 0, sheets: 1, diameter: 2, hand: 3 };
+    await this.page.locator('.tab-btn').nth(idx[method]).click();
   }
 
   /**
@@ -65,7 +101,6 @@ export class CalcPage {
       const input = card.locator(`input[placeholder*="${placeholder}"]`).first();
       if (await input.count() > 0) {
         await input.fill(value);
-        await input.dispatchEvent('input');
       }
     };
 
@@ -87,23 +122,22 @@ export class CalcPage {
     return this.page.locator('.item-card').nth(cardIndex).locator('.cpg').innerText();
   }
 
-  tpResults() { return this.page.locator('#tp-results'); }
-  tpCards()   { return this.page.locator('#tp-grid .item-card'); }
+  tpResults() { return this.page.locator('.results-summary'); }
+  tpCards()   { return this.page.locator('.cards-grid .item-card'); }
 
   // ── Protein Powder helpers ───────────────────────────────────────────────
-  async addPowder() { await this.page.click('#pro-add-btn'); }
+  async addPowder() { await this.page.locator('.top-controls .add-btn').click(); }
 
   async fillPowder(cardIndex: number, fields: Partial<{
     price: string; weight: string; servings: string; protein: string;
   }>) {
-    const card = this.page.locator('#pro-grid .item-card').nth(cardIndex);
+    const card = this.page.locator('.cards-grid .item-card').nth(cardIndex);
 
     const setByLabel = async (labelText: string, value: string) => {
       const field = card.locator('.field').filter({ hasText: labelText });
       const input = field.locator('input[type="number"]').first();
       if (await input.count() > 0) {
         await input.fill(value);
-        await input.dispatchEvent('input');
       }
     };
 
@@ -117,10 +151,10 @@ export class CalcPage {
     return this.page.locator('.item-card').nth(cardIndex).locator('.cpg').innerText();
   }
 
-  proSummary() { return this.page.locator('#pro-summary'); }
-  proCards()   { return this.page.locator('#pro-grid .item-card'); }
+  proSummary() { return this.page.locator('.results-summary'); }
+  proCards()   { return this.page.locator('.cards-grid .item-card'); }
 
   // ── Shared helpers ───────────────────────────────────────────────────────
-  winnerCard() { return this.page.locator('.page.visible .item-card.winner'); }
-  rankItems()  { return this.page.locator('.page.visible .rank-item'); }
+  winnerCard() { return this.page.locator('.item-card.winner'); }
+  rankItems()  { return this.page.locator('.rank-list .rank-item'); }
 }
