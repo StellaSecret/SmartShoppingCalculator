@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Shopping Calculator</title>
+  <style>
+    :root { --bg: #f0f0ed; --text: #1a1a1a; --muted: #6a6a6a; --surface: #ffffff; --border: #e2e2de; --win: #1a7a3a; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "DM Sans", system-ui, sans-serif;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 2rem;
+    }
+    main { max-width: 34rem; text-align: center; }
+    h1 {
+      font-family: "DM Mono", monospace;
+      font-size: 1.6rem;
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
+    }
+    p { color: var(--muted); line-height: 1.6; margin-bottom: 2rem; }
+    a.launch {
+      display: inline-block;
+      background: var(--win);
+      color: #fff;
+      text-decoration: none;
+      font-family: "DM Mono", monospace;
+      padding: 0.8rem 1.6rem;
+      border-radius: 8px;
+      font-weight: 500;
+    }
+    a.launch:hover { filter: brightness(1.1); }
+    .note { font-size: 0.75rem; color: var(--muted); margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>🛒 smart shopping calculator</h1>
+    <p>Compare toilet paper by cost per gram of paper and protein powder by cost per gram of protein — no data leaves your browser.</p>
+    <a class="launch" href="./spa.html">open the calculator</a>
+    <div class="note">runs entirely in your browser · English / Français</div>
+  </main>
+</body>
+</html>

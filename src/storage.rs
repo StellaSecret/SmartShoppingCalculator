@@ -1,4 +1,4 @@
-use crate::models::{Lang, ProSession, TpSession};
+use smart_shopping_calculator_core::models::{Lang, ProSession, TpSession};
 use gloo_storage::{LocalStorage, Storage};
 
 const KEY_THEME: &str = "theme";
