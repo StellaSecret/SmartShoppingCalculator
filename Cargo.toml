@@ -7,7 +7,7 @@ description = "Compare products by real unit cost — toilet paper by €/g of p
 [dependencies]
 dioxus = { version = "0.7", features = ["web", "asset"] }
 smart-shopping-calculator-core = { path = "core" }
-gloo-storage = "0.3"
+gloo-storage = "0.4"
 web-sys = { version = "0.3", features = ["Window", "MediaQueryList"] }
 
 [workspace]
