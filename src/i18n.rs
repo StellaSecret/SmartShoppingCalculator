@@ -77,6 +77,16 @@ pub struct Strings {
     pub servings_per_week_ph: &'static str,
     pub footer: &'static str,
     pub more_suffix: &'static str,
+    pub scan_barcode: &'static str,
+    pub scan_scanning: &'static str,
+    pub scan_error_unsupported: &'static str,
+    pub scan_error_cancelled: &'static str,
+    pub scan_error_no_barcode: &'static str,
+    pub scan_error_read: &'static str,
+    pub scan_error_not_found: &'static str,
+    pub scan_error_not_in_db: &'static str,
+    pub scan_error_network: &'static str,
+    pub scan_error_unknown: &'static str,
 }
 
 pub const EN: Strings = Strings {
@@ -156,6 +166,16 @@ pub const EN: Strings = Strings {
     servings_per_week_ph: "e.g. 5",
     footer: "no data is sent anywhere · runs entirely in your browser",
     more_suffix: "more",
+    scan_barcode: "📷 scan barcode",
+    scan_scanning: "scanning…",
+    scan_error_unsupported: "Barcode scanning not supported in this browser",
+    scan_error_cancelled: "Scan cancelled",
+    scan_error_no_barcode: "No barcode found — try again",
+    scan_error_read: "Could not read the photo",
+    scan_error_not_found: "Product not found",
+    scan_error_not_in_db: "Product not in database",
+    scan_error_network: "Network error — check your connection",
+    scan_error_unknown: "Scan failed",
 };
 
 pub const FR: Strings = Strings {
@@ -235,12 +255,36 @@ pub const FR: Strings = Strings {
     servings_per_week_ph: "ex. 5",
     footer: "aucune donnée envoyée · fonctionne entièrement dans votre navigateur",
     more_suffix: "plus",
+    scan_barcode: "📷 scanner le code-barres",
+    scan_scanning: "scan…",
+    scan_error_unsupported: "Le scan de code-barres n'est pas pris en charge par ce navigateur",
+    scan_error_cancelled: "Scan annulé",
+    scan_error_no_barcode: "Aucun code-barres trouvé — réessayez",
+    scan_error_read: "Impossible de lire la photo",
+    scan_error_not_found: "Produit introuvable",
+    scan_error_not_in_db: "Produit absent de la base de données",
+    scan_error_network: "Erreur réseau — vérifiez votre connexion",
+    scan_error_unknown: "Échec du scan",
 };
 
 pub fn s(lang: Lang) -> &'static Strings {
     match lang {
         Lang::En => &EN,
         Lang::Fr => &FR,
+    }
+}
+
+pub fn scan_error_msg(lang: Lang, code: &str) -> &'static str {
+    let s_ = s(lang);
+    match code {
+        "scan.unsupported" => s_.scan_error_unsupported,
+        "scan.cancelled" => s_.scan_error_cancelled,
+        "scan.no_barcode" => s_.scan_error_no_barcode,
+        "scan.read" => s_.scan_error_read,
+        "scan.not_found" => s_.scan_error_not_found,
+        "scan.not_in_db" => s_.scan_error_not_in_db,
+        "scan.unknown" => s_.scan_error_unknown,
+        _ => s_.scan_error_network,
     }
 }
 

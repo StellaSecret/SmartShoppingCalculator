@@ -1,15 +1,24 @@
 use dioxus::prelude::*;
+use std::collections::HashMap;
 
 use smart_shopping_calculator_core::calc::{pf, pro_calc_powder, tp_calc_roll, tp_fmt, HandCal, ProCalc, TpCalc};
 use smart_shopping_calculator_core::models::{Lang, Powder, ProSession, TpMethod, TpRoll, TpSession, COLORS};
 use crate::css::CSS;
-use crate::i18n::{card_price_label, choosing_saves, count_powders, count_rolls, lifetime_line, s};
+use crate::i18n::{card_price_label, choosing_saves, count_powders, count_rolls, lifetime_line, s, scan_error_msg};
+use crate::scan;
 use crate::storage;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Page {
     Tp,
     Pro,
+}
+
+#[derive(Clone, PartialEq)]
+pub enum ScanStatus {
+    None,
+    Scanning,
+    Error(String),
 }
 
 #[derive(Clone, Copy)]
@@ -31,6 +40,8 @@ pub struct AppState {
     pub pro_usage_week: Signal<String>,
     pub pro_has_save: Signal<bool>,
     pub pro_toast: Signal<String>,
+    pub tp_scan: Signal<HashMap<u32, ScanStatus>>,
+    pub pro_scan: Signal<HashMap<u32, ScanStatus>>,
 }
 
 /// Precomputed row for the toilet-paper ranking list (rsx `for` loops
@@ -84,6 +95,8 @@ pub fn App() -> Element {
     let pro_usage_week = use_signal(|| "5".to_string());
     let pro_has_save = use_signal(storage::has_pro_session);
     let pro_toast = use_signal(String::new);
+    let tp_scan = use_signal(|| HashMap::new());
+    let pro_scan = use_signal(|| HashMap::new());
 
     let state = AppState {
         lang,
@@ -103,6 +116,8 @@ pub fn App() -> Element {
         pro_usage_week,
         pro_has_save,
         pro_toast,
+        tp_scan,
+        pro_scan,
     };
     use_context_provider(|| state);
 
@@ -382,7 +397,7 @@ fn TpPage() -> Element {
 
             div { class: "cards-grid",
                 for r in rolls_owned.iter().cloned() {
-                    { let id = r.id; tp_card(r, method, cur.clone(), lg, Some(id) == best_id && valid_len > 1, roll_count > 1, state.tp_rolls, state.hand_finger, state.hand_palm, state.hand_thumb) }
+                    { let id = r.id; tp_card(r, method, cur.clone(), lg, Some(id) == best_id && valid_len > 1, roll_count > 1, state.tp_rolls, state.hand_finger, state.hand_palm, state.hand_thumb, state.tp_scan) }
                 }
             }
 
@@ -403,6 +418,7 @@ fn tp_card(
     hand_finger: Signal<String>,
     hand_palm: Signal<String>,
     hand_thumb: Signal<String>,
+    mut scan_state: Signal<HashMap<u32, ScanStatus>>,
 ) -> Element {
     let id = r.id;
     let str_ = s(lang);
@@ -422,6 +438,28 @@ fn tp_card(
     let h_tube_val = if r.h_tube.is_empty() { "1".to_string() } else { r.h_tube.clone() };
     let h_width_val = if r.h_width.is_empty() { "1".to_string() } else { r.h_width.clone() };
 
+    let status = scan_state.read().get(&id).cloned().unwrap_or(ScanStatus::None);
+    let id_cl = id;
+    let scan_onclick = move |_| {
+        if matches!(scan_state.read().get(&id_cl), Some(ScanStatus::Scanning)) {
+            return;
+        }
+        scan_state.write().insert(id_cl, ScanStatus::Scanning);
+        let mut scan_state = scan_state.clone();
+        let mut tp_rolls = tp_rolls.clone();
+        spawn(async move {
+            let out = scan::scan_barcode().await;
+            if out.ok {
+                if let Some(x) = tp_rolls.write().iter_mut().find(|x| x.id == id_cl) {
+                    x.name = out.name;
+                }
+                scan_state.write().remove(&id_cl);
+            } else {
+                scan_state.write().insert(id_cl, ScanStatus::Error(out.error));
+            }
+        });
+    };
+
     rsx! {
         div { class: if is_winner { "item-card winner" } else { "item-card" }, key: "{id}",
             div { class: "card-header",
@@ -440,19 +478,32 @@ fn tp_card(
                         },
                     }
                 }
-                if removable {
+                div { class: "card-actions",
                     button {
-                        class: "remove-btn",
-                        onclick: move |_| {
-                            let mut rolls = tp_rolls.write();
-                            rolls.retain(|x| x.id != id);
-                            for (i, x) in rolls.iter_mut().enumerate() {
-                                x.idx = i;
-                            }
-                        },
-                        "×"
+                        class: "scan-btn",
+                        title: "{str_.scan_barcode}",
+                        onclick: scan_onclick,
+                        "{str_.scan_barcode}"
+                    }
+                    if removable {
+                        button {
+                            class: "remove-btn",
+                            onclick: move |_| {
+                                let mut rolls = tp_rolls.write();
+                                rolls.retain(|x| x.id != id);
+                                for (i, x) in rolls.iter_mut().enumerate() {
+                                    x.idx = i;
+                                }
+                            },
+                            "×"
+                        }
                     }
                 }
+            }
+            match status {
+                ScanStatus::Scanning => rsx! { div { class: "scan-status", "{str_.scan_scanning}" } },
+                ScanStatus::Error(ref code) => rsx! { div { class: "scan-status error", "{scan_error_msg(lang, code)}" } },
+                ScanStatus::None => rsx! {},
             }
             div { class: "field",
                 label { "{price_label}" }
@@ -922,7 +973,7 @@ fn ProPage() -> Element {
 
             div { class: "cards-grid",
                 for p in powders_owned.iter().cloned() {
-                    { let id = p.id; pro_card(p, cur.clone(), lg, Some(id) == best_id && valid_len > 1, powder_count > 1, state.pro_powders) }
+                    { let id = p.id; pro_card(p, cur.clone(), lg, Some(id) == best_id && valid_len > 1, powder_count > 1, state.pro_powders, state.pro_scan) }
                 }
             }
 
@@ -938,6 +989,7 @@ fn pro_card(
     is_winner: bool,
     removable: bool,
     mut pro_powders: Signal<Vec<Powder>>,
+    mut scan_state: Signal<HashMap<u32, ScanStatus>>,
 ) -> Element {
     let id = p.id;
     let str_ = s(lang);
@@ -948,6 +1000,37 @@ fn pro_card(
     let cpg_str = format!("{:.4}", calc.cpg);
     let total_protein_str = format!("{:.0}", calc.total_protein);
     let per_serving_str = format!("{:.2}", per_serving_price);
+
+    let status = scan_state.read().get(&id).cloned().unwrap_or(ScanStatus::None);
+    let id_cl = id;
+    let scan_onclick = move |_| {
+        if matches!(scan_state.read().get(&id_cl), Some(ScanStatus::Scanning)) {
+            return;
+        }
+        scan_state.write().insert(id_cl, ScanStatus::Scanning);
+        let mut scan_state = scan_state.clone();
+        let mut pro_powders = pro_powders.clone();
+        spawn(async move {
+            let out = scan::scan_barcode().await;
+            if out.ok {
+                if let Some(x) = pro_powders.write().iter_mut().find(|x| x.id == id_cl) {
+                    x.name = out.name;
+                    if !out.weight.is_empty() {
+                        x.weight = out.weight;
+                    }
+                    if !out.servings.is_empty() {
+                        x.servings = out.servings;
+                    }
+                    if !out.protein.is_empty() {
+                        x.protein = out.protein;
+                    }
+                }
+                scan_state.write().remove(&id_cl);
+            } else {
+                scan_state.write().insert(id_cl, ScanStatus::Error(out.error));
+            }
+        });
+    };
 
     rsx! {
         div { class: if is_winner { "item-card winner" } else { "item-card" }, key: "{id}",
@@ -967,19 +1050,32 @@ fn pro_card(
                         },
                     }
                 }
-                if removable {
+                div { class: "card-actions",
                     button {
-                        class: "remove-btn",
-                        onclick: move |_| {
-                            let mut powders = pro_powders.write();
-                            powders.retain(|x| x.id != id);
-                            for (i, x) in powders.iter_mut().enumerate() {
-                                x.idx = i;
-                            }
-                        },
-                        "×"
+                        class: "scan-btn",
+                        title: "{str_.scan_barcode}",
+                        onclick: scan_onclick,
+                        "{str_.scan_barcode}"
+                    }
+                    if removable {
+                        button {
+                            class: "remove-btn",
+                            onclick: move |_| {
+                                let mut powders = pro_powders.write();
+                                powders.retain(|x| x.id != id);
+                                for (i, x) in powders.iter_mut().enumerate() {
+                                    x.idx = i;
+                                }
+                            },
+                            "×"
+                        }
                     }
                 }
+            }
+            match status {
+                ScanStatus::Scanning => rsx! { div { class: "scan-status", "{str_.scan_scanning}" } },
+                ScanStatus::Error(ref code) => rsx! { div { class: "scan-status error", "{scan_error_msg(lang, code)}" } },
+                ScanStatus::None => rsx! {},
             }
             div { class: "field",
                 label { "{price_label}" }

@@ -4815,6 +4815,7 @@ dependencies = [
  "dioxus",
  "dioxus-desktop",
  "gloo-storage",
+ "serde",
  "serde_json",
  "smart-shopping-calculator-core",
  "web-sys",

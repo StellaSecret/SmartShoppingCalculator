@@ -9,6 +9,7 @@ pub const CSS: &str = r#"
   --muted: #76746e;
   --win: #2d5a1a;
   --win-bg: #eaf2e6;
+  --danger: #b3261e;
   --tag-more-bg: #eeebe5;
   --mono: 'DM Mono', monospace;
   --sans: 'DM Sans', sans-serif;
@@ -22,6 +23,7 @@ pub const CSS: &str = r#"
   --muted: #888884;
   --win: #5aaa3a;
   --win-bg: #1a2e12;
+  --danger: #e5a3a0;
   --tag-more-bg: #2a2a2c;
 }
 
@@ -126,6 +128,15 @@ header p { font-size: 0.875rem; color: var(--muted); margin-top: 0.35rem; }
 .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
 .remove-btn { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 1rem; line-height: 1; padding: 0 2px; transition: color 0.15s; }
 .remove-btn:hover { color: var(--text); }
+.card-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.scan-btn {
+  padding: 3px 8px; font-family: var(--mono); font-size: 0.66rem; line-height: 1;
+  border: 1px solid var(--border); border-radius: 4px; background: var(--surface);
+  color: var(--muted); cursor: pointer; white-space: nowrap; transition: all 0.15s;
+}
+.scan-btn:hover { color: var(--text); border-color: var(--text); }
+.scan-status { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); margin: -4px 0 10px; }
+.scan-status.error { color: var(--danger); }
 
 .card-result { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-family: var(--mono); }
 .cpg { font-size: 1.2rem; font-weight: 500; }
