@@ -52,7 +52,7 @@ jobs:
         run: cargo test
         working-directory: core
       - name: Check WASM build
-        run: cargo check --target wasm32-unknown-unknown -p smart-shopping-calculator
+        run: cargo check --target wasm32-unknown-unknown -p smart-shopping-calculator --features web
 
   # ── WEB (WASM) BUILD ──────────────────────────────────
   web-build:
@@ -75,7 +75,7 @@ jobs:
           tar -xzf dx-x86_64-unknown-linux-gnu.tar.gz
           install -m 755 dx /usr/local/bin/dx
       - name: Build WASM
-        run: dx build --release --package smart-shopping-calculator --debug-symbols false --base-path /SmartShoppingCalculator
+        run: dx build --release --platform web --package smart-shopping-calculator --debug-symbols false --base-path /SmartShoppingCalculator
       - name: Install npm deps
         env:
           HUSKY: 0
