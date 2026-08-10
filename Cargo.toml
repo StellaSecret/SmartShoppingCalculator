@@ -15,7 +15,7 @@ gloo-storage = "0.4"
 web-sys = { version = "0.3", features = ["Window", "MediaQueryList"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-dioxus-desktop = "=0.7.9"
+dioxus-desktop = "=0.7.10"
 
 [features]
 web = ["dioxus/web"]
