@@ -7,18 +7,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: write
-  security-events: write
-  actions: read
-  pages: write
-  id-token: write
-
-env:
-  GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+permissions: {}
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -26,12 +18,15 @@ jobs:
   scan-secrets:
     name: Secret Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: TruffleHog OSS
-        uses: trufflesecurity/trufflehog@main
+        uses: trufflesecurity/trufflehog@v3.99.7
         with:
           path: ./
           base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
@@ -42,8 +37,12 @@ jobs:
   rust-core:
     name: Rust Core (test + WASM check)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
@@ -59,10 +58,14 @@ jobs:
     name: Build WASM
     needs: [rust-core]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-noble
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
@@ -92,6 +95,8 @@ jobs:
     name: Playwright Tests (shard ${{ matrix.shard }}/3)
     needs: [web-build]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-noble
     strategy:
@@ -100,6 +105,8 @@ jobs:
         shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: Download WASM build
         uses: actions/download-artifact@v8
         with:
@@ -125,11 +132,19 @@ jobs:
   # ── ANDROID BUILD (Dioxus Mobile) ────────────────────
   build-android:
     name: Build Android APK + AAB
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     needs: [scan-secrets, rust-core]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    environment:
+      name: ${{ github.event_name == 'pull_request' && 'build-review' || 'build' }}
+    env:
+      GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android,i686-linux-android
@@ -141,10 +156,10 @@ jobs:
           key: android-debug-keystore-v1
       - name: Setup stable debug keystore
         env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEYSTORE_BASE64: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.KEYSTORE_BASE64 || '' }}
+          KEYSTORE_PASSWORD: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.KEYSTORE_PASSWORD || '' }}
+          KEY_PASSWORD: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.KEY_PASSWORD || '' }}
+          KEY_ALIAS: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.KEY_ALIAS || '' }}
         run: |
           DEST="$HOME/.android/debug.keystore"
           mkdir -p "$HOME/.android"
@@ -152,7 +167,7 @@ jobs:
           KP="${KEY_PASSWORD:-android}"
           ALIAS_RAW="${KEY_ALIAS}"
           ALIAS="${ALIAS_RAW:-androiddebugkey}"
-          echo "--- Keystore setup: SP=$SP KP=$KP ALIAS=$ALIAS"
+          echo "--- Keystore setup ---"
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "Decoding base64 keystore (${#KEYSTORE_BASE64} chars)..."
             echo "$KEYSTORE_BASE64" | base64 -d > "$DEST.tmp"
@@ -275,6 +290,7 @@ jobs:
             find target/dx -name "gradlew" 2>/dev/null || true
           fi
       - name: Sign APK (sign unsigned release APK if present)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
@@ -303,6 +319,7 @@ jobs:
             --out "$SIGNED" "$ALIGNED"
           echo "Signed: $SIGNED"
       - name: Sign AAB (required by Google Play)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
@@ -360,7 +377,7 @@ jobs:
             echo "WARNING: $SO not found — skipping debug symbols"
           fi
       - name: Upload APK Artifact
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v7
         with:
           name: android-apk
@@ -370,14 +387,23 @@ jobs:
   # ── DEPLOY WEB TO GITHUB PAGES ────────────────────────
   deploy-web:
     name: Deploy to GitHub Pages
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [playwright-tests]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: Download WASM build
         uses: actions/download-artifact@v8
         with:
@@ -428,10 +454,15 @@ jobs:
   # ── RELEASE (Android + Web) ──────────────────────────
   release:
     name: Create Release
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [playwright-tests, build-android]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     environment: release
+    concurrency:
+      group: release-${{ github.ref }}
+      cancel-in-progress: false
     steps:
       - name: Download Android APK
         uses: actions/download-artifact@v8
